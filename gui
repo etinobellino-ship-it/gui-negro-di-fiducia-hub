@@ -1,59 +1,60 @@
---[[
-    ╔══════════════════════════════════════════════╗
-    ║             NEGRO HUB ULTRA                 ║
-    ║                                              ║
-    ║   Premium Intro + Loading + Animated Hub    ║
-    ║   X = Chiudi | N = Riapri                   ║
-    ╚══════════════════════════════════════════════╝
-]]
+--========================================================--
+--                 NEGRO HUB - FINAL FIX                  --
+--========================================================--
 
-local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
 
 --========================================================--
--- CONFIG
---========================================================--
-
-local C = {
-    Pink   = Color3.fromRGB(255, 0, 125),
-    Purple = Color3.fromRGB(145, 0, 255),
-    Blue   = Color3.fromRGB(0, 190, 255),
-    Cyan   = Color3.fromRGB(0, 255, 220),
-    Red    = Color3.fromRGB(255, 45, 65),
-
-    Black  = Color3.fromRGB(2, 2, 7),
-    Panel  = Color3.fromRGB(10, 10, 18),
-    Panel2 = Color3.fromRGB(17, 17, 28),
-    White  = Color3.fromRGB(245, 245, 255),
-    Gray   = Color3.fromRGB(135, 135, 155)
-}
-
-local function makeTween(object, time, properties, style, direction)
-    local info = TweenInfo.new(
-        time or 0.5,
-        style or Enum.EasingStyle.Quint,
-        direction or Enum.EasingDirection.Out
-    )
-
-    local tween = TweenService:Create(object, info, properties)
-    tween:Play()
-
-    return tween
-end
-
---========================================================--
--- CLEANUP
+-- CLEANUP COMPLETO
 --========================================================--
 
 pcall(function()
-    local old = CoreGui:FindFirstChild("NegroHubUltra")
-    if old then
-        old:Destroy()
+    for _, v in ipairs(CoreGui:GetChildren()) do
+        if v.Name == "NegroHubUltra"
+        or v.Name == "NegroHubIntro"
+        or v.Name == "NegroHub"
+        then
+            v:Destroy()
+        end
     end
 end)
 
 --========================================================--
--- MAIN GUI
+-- COLORI
+--========================================================--
+
+local Pink = Color3.fromRGB(255, 0, 130)
+local Purple = Color3.fromRGB(145, 0, 255)
+local Blue = Color3.fromRGB(0, 190, 255)
+local Cyan = Color3.fromRGB(0, 255, 220)
+local Red = Color3.fromRGB(255, 45, 60)
+
+local White = Color3.fromRGB(245, 245, 255)
+local Gray = Color3.fromRGB(135, 135, 155)
+
+--========================================================--
+-- TWEEN
+--========================================================--
+
+local function Tween(obj, time, props, style, direction)
+
+    local info = TweenInfo.new(
+        time,
+        style or Enum.EasingStyle.Quint,
+        direction or Enum.EasingDirection.Out
+    )
+
+    local t = TweenService:Create(obj, info, props)
+    t:Play()
+
+    return t
+end
+
+--========================================================--
+-- SCREEN GUI
+-- IMPORTANTE:
+-- QUESTA GUI NON HA NESSUNO SFONDO
 --========================================================--
 
 local gui = Instance.new("ScreenGui")
@@ -61,106 +62,107 @@ gui.Name = "NegroHubUltra"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 999999
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = CoreGui
 
 --========================================================--
--- INTRO GUI
--- SEPARATA DALL'HUB
+-- INTRO
 --========================================================--
 
-local introGui = Instance.new("Frame")
-introGui.Name = "Intro"
-introGui.Size = UDim2.fromScale(1, 1)
-introGui.BackgroundColor3 = C.Black
-introGui.BorderSizePixel = 0
-introGui.ZIndex = 1
-introGui.Parent = gui
+local intro = Instance.new("Frame")
+intro.Name = "Intro"
+intro.Size = UDim2.fromScale(1, 1)
+intro.Position = UDim2.fromScale(0, 0)
+intro.BackgroundColor3 = Color3.fromRGB(2, 2, 7)
+intro.BorderSizePixel = 0
+intro.ZIndex = 1
+intro.Parent = gui
 
--- Background gradient
+-- Gradient
 local introGradient = Instance.new("UIGradient")
 introGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(2, 2, 8)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(14, 3, 27)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 3, 28)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(2, 7, 18))
 })
 introGradient.Rotation = 35
-introGradient.Parent = introGui
+introGradient.Parent = intro
 
 --========================================================--
--- INTRO GLOW
+-- GLOW
 --========================================================--
 
-local introGlow = Instance.new("Frame")
-introGlow.AnchorPoint = Vector2.new(0.5, 0.5)
-introGlow.Position = UDim2.fromScale(0.5, 0.48)
-introGlow.Size = UDim2.fromScale(0.65, 0.4)
-introGlow.BackgroundColor3 = C.Purple
-introGlow.BackgroundTransparency = 0.94
-introGlow.BorderSizePixel = 0
-introGlow.ZIndex = 2
-introGlow.Parent = introGui
+local glow = Instance.new("Frame")
+glow.AnchorPoint = Vector2.new(0.5, 0.5)
+glow.Position = UDim2.fromScale(0.5, 0.48)
+glow.Size = UDim2.fromScale(0.7, 0.4)
+glow.BackgroundColor3 = Purple
+glow.BackgroundTransparency = 0.94
+glow.BorderSizePixel = 0
+glow.ZIndex = 2
+glow.Parent = intro
 
-local introGlowCorner = Instance.new("UICorner")
-introGlowCorner.CornerRadius = UDim.new(1, 0)
-introGlowCorner.Parent = introGlow
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(1, 0)
+glowCorner.Parent = glow
 
 --========================================================--
--- PARTICLES
+-- PARTICELLE
 --========================================================--
 
-local particleFolder = Instance.new("Folder")
-particleFolder.Parent = introGui
+local particles = Instance.new("Folder")
+particles.Name = "Particles"
+particles.Parent = intro
 
-for i = 1, 55 do
+for i = 1, 45 do
 
-    local particle = Instance.new("Frame")
-    local size = math.random(1, 4)
+    local p = Instance.new("Frame")
 
-    particle.Size = UDim2.fromOffset(size, size)
-    particle.Position = UDim2.fromScale(
+    local s = math.random(1, 4)
+
+    p.Size = UDim2.fromOffset(s, s)
+    p.Position = UDim2.fromScale(
         math.random(),
         math.random()
     )
 
-    particle.BackgroundColor3 = Color3.fromHSV(
+    p.BackgroundColor3 = Color3.fromHSV(
         math.random(),
         0.8,
         1
     )
 
-    particle.BackgroundTransparency =
-        math.random(45, 90) / 100
+    p.BackgroundTransparency =
+        math.random(40, 90) / 100
 
-    particle.BorderSizePixel = 0
-    particle.ZIndex = 3
-    particle.Parent = particleFolder
+    p.BorderSizePixel = 0
+    p.ZIndex = 3
+    p.Parent = particles
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = particle
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(1, 0)
+    c.Parent = p
 
     task.spawn(function()
 
-        while particle.Parent do
+        while p.Parent do
 
-            local target = UDim2.fromScale(
+            local destination = UDim2.fromScale(
                 math.random(),
                 math.random()
             )
 
-            local t = makeTween(
-                particle,
-                math.random(3, 8),
+            Tween(
+                p,
+                math.random(3, 7),
                 {
-                    Position = target,
-                    BackgroundTransparency =
-                        math.random(30, 90) / 100
+                    Position = destination
                 },
                 Enum.EasingStyle.Sine,
                 Enum.EasingDirection.InOut
             )
 
-            t.Completed:Wait()
+            task.wait(math.random(2, 5))
         end
 
     end)
@@ -173,88 +175,91 @@ end
 local introContainer = Instance.new("Frame")
 introContainer.AnchorPoint = Vector2.new(0.5, 0.5)
 introContainer.Position = UDim2.fromScale(0.5, 0.5)
-introContainer.Size = UDim2.fromScale(0.78, 0.42)
+introContainer.Size = UDim2.fromScale(0.8, 0.4)
 introContainer.BackgroundTransparency = 1
 introContainer.ZIndex = 10
-introContainer.Parent = introGui
+introContainer.Parent = intro
 
 local introScale = Instance.new("UIScale")
-introScale.Scale = 0.75
+introScale.Scale = 0.8
 introScale.Parent = introContainer
 
 --========================================================--
--- INTRO TITLE
+-- PRESENTAZIONE
 --========================================================--
 
-local introTitle = Instance.new("TextLabel")
-introTitle.AnchorPoint = Vector2.new(0.5, 0)
-introTitle.Position = UDim2.fromScale(0.5, 0.22)
-introTitle.Size = UDim2.fromScale(0.95, 0.22)
-introTitle.BackgroundTransparency = 1
-introTitle.Text = "Negro di Fiducia presenta"
-introTitle.TextColor3 = C.White
-introTitle.TextScaled = true
-introTitle.Font = Enum.Font.GothamBold
-introTitle.TextTransparency = 1
-introTitle.ZIndex = 15
-introTitle.Parent = introContainer
+local presentation = Instance.new("TextLabel")
+presentation.AnchorPoint = Vector2.new(0.5, 0)
+presentation.Position = UDim2.fromScale(0.5, 0.2)
+presentation.Size = UDim2.fromScale(0.95, 0.2)
+presentation.BackgroundTransparency = 1
+presentation.Text = "Negro di Fiducia presenta"
+presentation.TextColor3 = White
+presentation.TextScaled = true
+presentation.Font = Enum.Font.GothamBold
+presentation.TextTransparency = 1
+presentation.ZIndex = 20
+presentation.Parent = introContainer
 
-local titleGradient = Instance.new("UIGradient")
-titleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, C.Pink),
-    ColorSequenceKeypoint.new(0.3, C.Purple),
-    ColorSequenceKeypoint.new(0.65, C.Blue),
-    ColorSequenceKeypoint.new(1, C.Pink)
+local presentationGradient = Instance.new("UIGradient")
+presentationGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Cyan)
 })
-titleGradient.Parent = introTitle
+presentationGradient.Parent = presentation
 
 --========================================================--
 -- LOADING TEXT
 --========================================================--
 
-local loadingText = Instance.new("TextLabel")
-loadingText.AnchorPoint = Vector2.new(0.5, 0)
-loadingText.Position = UDim2.fromScale(0.5, 0.48)
-loadingText.Size = UDim2.fromScale(0.85, 0.08)
-loadingText.BackgroundTransparency = 1
-loadingText.Text = "LOADING SCRIPT FOR THIS GAME"
-loadingText.TextColor3 = C.Gray
-loadingText.TextScaled = true
-loadingText.Font = Enum.Font.GothamMedium
-loadingText.TextTransparency = 1
-loadingText.ZIndex = 15
-loadingText.Parent = introContainer
+local loading = Instance.new("TextLabel")
+loading.AnchorPoint = Vector2.new(0.5, 0)
+loading.Position = UDim2.fromScale(0.5, 0.46)
+loading.Size = UDim2.fromScale(0.9, 0.08)
+loading.BackgroundTransparency = 1
+loading.Text = "LOADING SCRIPT FOR THIS GAME"
+loading.TextColor3 = Gray
+loading.TextScaled = true
+loading.Font = Enum.Font.GothamMedium
+loading.TextTransparency = 1
+loading.ZIndex = 20
+loading.Parent = introContainer
 
 --========================================================--
--- BAR
+-- BAR ESTERNA
 --========================================================--
 
-local barOuter = Instance.new("Frame")
-barOuter.AnchorPoint = Vector2.new(0.5, 0)
-barOuter.Position = UDim2.fromScale(0.5, 0.60)
-barOuter.Size = UDim2.fromScale(0.62, 0.045)
-barOuter.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
-barOuter.BackgroundTransparency = 1
-barOuter.BorderSizePixel = 0
-barOuter.ZIndex = 15
-barOuter.Parent = introContainer
+local barBackground = Instance.new("Frame")
+barBackground.AnchorPoint = Vector2.new(0.5, 0)
+barBackground.Position = UDim2.fromScale(0.5, 0.59)
+barBackground.Size = UDim2.fromScale(0.65, 0.045)
+barBackground.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+barBackground.BorderSizePixel = 0
+barBackground.BackgroundTransparency = 1
+barBackground.ZIndex = 20
+barBackground.Parent = introContainer
 
 local barCorner = Instance.new("UICorner")
 barCorner.CornerRadius = UDim.new(1, 0)
-barCorner.Parent = barOuter
+barCorner.Parent = barBackground
 
 local barStroke = Instance.new("UIStroke")
 barStroke.Thickness = 1
-barStroke.Transparency = 0.3
-barStroke.Color = C.Purple
-barStroke.Parent = barOuter
+barStroke.Color = Purple
+barStroke.Transparency = 0.25
+barStroke.Parent = barBackground
+
+--========================================================--
+-- PROGRESS
+--========================================================--
 
 local progress = Instance.new("Frame")
 progress.Size = UDim2.fromScale(0, 1)
-progress.BackgroundColor3 = C.Purple
+progress.BackgroundColor3 = Purple
 progress.BorderSizePixel = 0
-progress.ZIndex = 16
-progress.Parent = barOuter
+progress.ZIndex = 21
+progress.Parent = barBackground
 
 local progressCorner = Instance.new("UICorner")
 progressCorner.CornerRadius = UDim.new(1, 0)
@@ -262,77 +267,49 @@ progressCorner.Parent = progress
 
 local progressGradient = Instance.new("UIGradient")
 progressGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, C.Pink),
-    ColorSequenceKeypoint.new(0.45, C.Purple),
-    ColorSequenceKeypoint.new(1, C.Cyan)
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Cyan)
 })
 progressGradient.Parent = progress
 
 --========================================================--
--- SHINE
+-- PERCENTUALE
 --========================================================--
 
-local shine = Instance.new("Frame")
-shine.Size = UDim2.fromScale(0.08, 2)
-shine.Position = UDim2.fromScale(-0.1, -0.5)
-shine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-shine.BackgroundTransparency = 0.65
-shine.BorderSizePixel = 0
-shine.ZIndex = 17
-shine.Parent = progress
-
-local shineGradient = Instance.new("UIGradient")
-shineGradient.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 1),
-    NumberSequenceKeypoint.new(0.5, 0),
-    NumberSequenceKeypoint.new(1, 1)
-})
-shineGradient.Parent = shine
+local percent = Instance.new("TextLabel")
+percent.AnchorPoint = Vector2.new(0.5, 0)
+percent.Position = UDim2.fromScale(0.5, 0.67)
+percent.Size = UDim2.fromScale(0.25, 0.08)
+percent.BackgroundTransparency = 1
+percent.Text = "0%"
+percent.TextColor3 = White
+percent.TextScaled = true
+percent.Font = Enum.Font.GothamBold
+percent.TextTransparency = 1
+percent.ZIndex = 20
+percent.Parent = introContainer
 
 --========================================================--
--- PERCENTAGE
---========================================================--
-
-local percentage = Instance.new("TextLabel")
-percentage.AnchorPoint = Vector2.new(0.5, 0)
-percentage.Position = UDim2.fromScale(0.5, 0.68)
-percentage.Size = UDim2.fromScale(0.25, 0.08)
-percentage.BackgroundTransparency = 1
-percentage.Text = "0%"
-percentage.TextColor3 = C.White
-percentage.TextScaled = true
-percentage.Font = Enum.Font.GothamBold
-percentage.TextTransparency = 1
-percentage.ZIndex = 15
-percentage.Parent = introContainer
-
---========================================================--
--- INTRO RGB
+-- RGB INTRO
 --========================================================--
 
 task.spawn(function()
 
-    while introGui.Parent do
+    while intro.Parent do
 
         local t = os.clock()
 
-        titleGradient.Offset =
+        presentationGradient.Offset =
             Vector2.new(math.sin(t * 0.8) * 0.5, 0)
 
         progressGradient.Offset =
-            Vector2.new(math.sin(t * 1.4) * 0.5, 0)
+            Vector2.new(math.sin(t * 1.2) * 0.5, 0)
 
-        introGlow.BackgroundColor3 =
+        glow.BackgroundColor3 =
             Color3.fromHSV(
                 (t * 0.08) % 1,
                 0.9,
-                1
-            )
-
-        barStroke.Color =
-            Color3.fromHSV(
-                (t * 0.12) % 1,
-                0.8,
                 1
             )
 
@@ -342,142 +319,88 @@ task.spawn(function()
 end)
 
 --========================================================--
--- INTRO IN
+-- INTRO ENTRATA
 --========================================================--
 
-makeTween(
+Tween(
     introScale,
-    1.2,
+    1,
     {Scale = 1}
 )
 
-makeTween(
-    introTitle,
-    1,
+Tween(
+    presentation,
+    0.8,
     {TextTransparency = 0}
 )
 
-makeTween(
-    loadingText,
-    1,
+Tween(
+    loading,
+    0.8,
     {TextTransparency = 0}
 )
 
-makeTween(
-    barOuter,
-    1,
-    {BackgroundTransparency = 0.15}
+Tween(
+    barBackground,
+    0.8,
+    {BackgroundTransparency = 0.1}
 )
 
-makeTween(
-    percentage,
-    1,
+Tween(
+    percent,
+    0.8,
     {TextTransparency = 0}
 )
+
+task.wait(0.5)
 
 --========================================================--
--- LOADING
+-- CARICAMENTO
 --========================================================--
 
 for i = 0, 100 do
 
-    percentage.Text = i .. "%"
+    percent.Text = i .. "%"
 
-    makeTween(
+    Tween(
         progress,
-        0.08,
+        0.045,
         {
             Size = UDim2.fromScale(i / 100, 1)
         },
         Enum.EasingStyle.Linear
     )
 
-    task.wait(0.035)
+    task.wait(0.03)
 end
 
-percentage.Text = "100%"
+percent.Text = "100%"
 
-task.wait(0.7)
-
---========================================================--
--- INTRO OUT
---========================================================--
-
-for _, object in ipairs({
-    introTitle,
-    loadingText,
-    percentage
-}) do
-
-    makeTween(
-        object,
-        0.55,
-        {
-            TextTransparency = 1
-        }
-    )
-
-end
-
-makeTween(
-    barOuter,
-    0.55,
-    {
-        BackgroundTransparency = 1
-    }
-)
-
-makeTween(
-    introGlow,
-    0.55,
-    {
-        BackgroundTransparency = 1
-    }
-)
-
-makeTween(
-    introContainer,
-    0.65,
-    {
-        Position = UDim2.fromScale(0.5, 0.46)
-    }
-)
-
-task.wait(0.65)
+task.wait(0.5)
 
 --========================================================--
--- IMPORTANT FIX
--- L'INTRO VIENE DISTRUTTA COMPLETAMENTE
+-- IMPORTANTISSIMO:
+-- DISTRUGGI COMPLETAMENTE L'INTRO
 --========================================================--
 
-introGui:Destroy()
-
---========================================================--
--- HUB LAYER
---========================================================--
-
-local hubLayer = Instance.new("Frame")
-hubLayer.Name = "HubLayer"
-hubLayer.Size = UDim2.fromScale(1, 1)
-hubLayer.BackgroundTransparency = 1
-hubLayer.BorderSizePixel = 0
-hubLayer.ZIndex = 100
-hubLayer.Parent = gui
+intro:Destroy()
 
 --========================================================--
 -- HUB
+--
+-- QUESTA PARTE NON HA ALCUN FRAME FULL SCREEN NERO
 --========================================================--
 
 local hub = Instance.new("Frame")
-hub.Name = "MainHub"
+hub.Name = "Hub"
 hub.AnchorPoint = Vector2.new(0.5, 0.5)
 hub.Position = UDim2.fromScale(0.5, 0.5)
-hub.Size = UDim2.fromScale(0.42, 0.38)
-hub.BackgroundColor3 = C.Panel
-hub.BackgroundTransparency = 1
+hub.Size = UDim2.fromScale(0.01, 0.01)
+hub.BackgroundColor3 = Color3.fromRGB(10, 10, 18)
+hub.BackgroundTransparency = 0.05
 hub.BorderSizePixel = 0
-hub.ZIndex = 110
-hub.Parent = hubLayer
+hub.ZIndex = 100
+hub.Parent = gui
 
 local hubCorner = Instance.new("UICorner")
 hubCorner.CornerRadius = UDim.new(0, 20)
@@ -490,9 +413,9 @@ hubStroke.Parent = hub
 
 local hubGradient = Instance.new("UIGradient")
 hubGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(21, 8, 34)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 8, 38)),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8, 12, 25)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 5, 25))
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(22, 5, 27))
 })
 hubGradient.Rotation = 45
 hubGradient.Parent = hub
@@ -504,10 +427,10 @@ hubGradient.Parent = hub
 local header = Instance.new("Frame")
 header.Position = UDim2.fromScale(0.035, 0.035)
 header.Size = UDim2.fromScale(0.93, 0.18)
-header.BackgroundColor3 = C.Panel2
-header.BackgroundTransparency = 0.15
+header.BackgroundColor3 = Color3.fromRGB(17, 17, 28)
+header.BackgroundTransparency = 0.1
 header.BorderSizePixel = 0
-header.ZIndex = 115
+header.ZIndex = 110
 header.Parent = hub
 
 local headerCorner = Instance.new("UICorner")
@@ -515,93 +438,67 @@ headerCorner.CornerRadius = UDim.new(0, 14)
 headerCorner.Parent = header
 
 --========================================================--
--- TITLE
+-- HUB TITLE
 --========================================================--
 
 local hubTitle = Instance.new("TextLabel")
-hubTitle.Position = UDim2.fromScale(0.05, 0.10)
-hubTitle.Size = UDim2.fromScale(0.68, 0.52)
+hubTitle.Position = UDim2.fromScale(0.05, 0.1)
+hubTitle.Size = UDim2.fromScale(0.68, 0.5)
 hubTitle.BackgroundTransparency = 1
 hubTitle.Text = "NEGRO HUB"
-hubTitle.TextColor3 = C.White
+hubTitle.TextColor3 = White
 hubTitle.TextScaled = true
 hubTitle.Font = Enum.Font.GothamBlack
 hubTitle.TextXAlignment = Enum.TextXAlignment.Left
-hubTitle.ZIndex = 120
+hubTitle.ZIndex = 115
 hubTitle.Parent = header
 
 local hubTitleGradient = Instance.new("UIGradient")
 hubTitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, C.Pink),
-    ColorSequenceKeypoint.new(0.5, C.Purple),
-    ColorSequenceKeypoint.new(1, C.Blue)
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Blue)
 })
 hubTitleGradient.Parent = hubTitle
 
 local subtitle = Instance.new("TextLabel")
-subtitle.Position = UDim2.fromScale(0.052, 0.62)
-subtitle.Size = UDim2.fromScale(0.65, 0.24)
+subtitle.Position = UDim2.fromScale(0.052, 0.61)
+subtitle.Size = UDim2.fromScale(0.6, 0.25)
 subtitle.BackgroundTransparency = 1
 subtitle.Text = "Premium Script Hub"
-subtitle.TextColor3 = C.Gray
+subtitle.TextColor3 = Gray
 subtitle.TextScaled = true
 subtitle.Font = Enum.Font.GothamMedium
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
-subtitle.ZIndex = 120
+subtitle.ZIndex = 115
 subtitle.Parent = header
 
 --========================================================--
--- CLOSE X
+-- X ROSSA
 --========================================================--
 
-local closeButton = Instance.new("TextButton")
-closeButton.AnchorPoint = Vector2.new(1, 0.5)
-closeButton.Position = UDim2.fromScale(0.97, 0.5)
-closeButton.Size = UDim2.fromScale(0.075, 0.58)
-closeButton.BackgroundColor3 = C.Red
-closeButton.BorderSizePixel = 0
-closeButton.Text = "×"
-closeButton.TextColor3 = C.White
-closeButton.TextScaled = true
-closeButton.Font = Enum.Font.GothamBold
-closeButton.AutoButtonColor = false
-closeButton.ZIndex = 125
-closeButton.Parent = header
+local close = Instance.new("TextButton")
+close.AnchorPoint = Vector2.new(1, 0.5)
+close.Position = UDim2.fromScale(0.97, 0.5)
+close.Size = UDim2.fromScale(0.075, 0.58)
+close.BackgroundColor3 = Red
+close.BorderSizePixel = 0
+close.Text = "×"
+close.TextColor3 = White
+close.TextScaled = true
+close.Font = Enum.Font.GothamBold
+close.AutoButtonColor = false
+close.ZIndex = 120
+close.Parent = header
 
 local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 10)
-closeCorner.Parent = closeButton
+closeCorner.Parent = close
 
 local closeStroke = Instance.new("UIStroke")
-closeStroke.Color = Color3.fromRGB(255, 110, 125)
+closeStroke.Color = Color3.fromRGB(255, 120, 130)
 closeStroke.Thickness = 1
-closeStroke.Parent = closeButton
-
-closeButton.MouseEnter:Connect(function()
-
-    makeTween(
-        closeButton,
-        0.18,
-        {
-            BackgroundColor3 = Color3.fromRGB(255, 30, 55),
-            Size = UDim2.fromScale(0.085, 0.65)
-        }
-    )
-
-end)
-
-closeButton.MouseLeave:Connect(function()
-
-    makeTween(
-        closeButton,
-        0.18,
-        {
-            BackgroundColor3 = C.Red,
-            Size = UDim2.fromScale(0.075, 0.58)
-        }
-    )
-
-end)
+closeStroke.Parent = close
 
 --========================================================--
 -- CONTENT
@@ -611,9 +508,9 @@ local content = Instance.new("Frame")
 content.Position = UDim2.fromScale(0.035, 0.245)
 content.Size = UDim2.fromScale(0.93, 0.71)
 content.BackgroundColor3 = Color3.fromRGB(5, 5, 11)
-content.BackgroundTransparency = 0.15
+content.BackgroundTransparency = 0.08
 content.BorderSizePixel = 0
-content.ZIndex = 115
+content.ZIndex = 110
 content.Parent = hub
 
 local contentCorner = Instance.new("UICorner")
@@ -625,17 +522,17 @@ welcome.Position = UDim2.fromScale(0.06, 0.12)
 welcome.Size = UDim2.fromScale(0.88, 0.17)
 welcome.BackgroundTransparency = 1
 welcome.Text = "WELCOME"
-welcome.TextColor3 = C.White
+welcome.TextColor3 = White
 welcome.TextScaled = true
 welcome.Font = Enum.Font.GothamBlack
-welcome.ZIndex = 120
+welcome.ZIndex = 115
 welcome.Parent = content
 
 local welcomeGradient = Instance.new("UIGradient")
 welcomeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, C.Pink),
-    ColorSequenceKeypoint.new(0.5, C.Purple),
-    ColorSequenceKeypoint.new(1, C.Cyan)
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Cyan)
 })
 welcomeGradient.Parent = welcome
 
@@ -644,67 +541,66 @@ description.Position = UDim2.fromScale(0.08, 0.34)
 description.Size = UDim2.fromScale(0.84, 0.12)
 description.BackgroundTransparency = 1
 description.Text = "NEGRO HUB IS READY"
-description.TextColor3 = C.Gray
+description.TextColor3 = Gray
 description.TextScaled = true
 description.Font = Enum.Font.GothamMedium
-description.ZIndex = 120
+description.ZIndex = 115
 description.Parent = content
 
 --========================================================--
--- ONLINE STATUS
+-- ONLINE
 --========================================================--
 
 local status = Instance.new("Frame")
 status.AnchorPoint = Vector2.new(0.5, 0)
 status.Position = UDim2.fromScale(0.5, 0.56)
 status.Size = UDim2.fromScale(0.42, 0.13)
-status.BackgroundColor3 = Color3.fromRGB(8, 38, 28)
-status.BackgroundTransparency = 0.1
+status.BackgroundColor3 = Color3.fromRGB(7, 38, 28)
 status.BorderSizePixel = 0
-status.ZIndex = 120
+status.ZIndex = 115
 status.Parent = content
 
 local statusCorner = Instance.new("UICorner")
 statusCorner.CornerRadius = UDim.new(1, 0)
 statusCorner.Parent = status
 
-local statusDot = Instance.new("Frame")
-statusDot.AnchorPoint = Vector2.new(0, 0.5)
-statusDot.Position = UDim2.fromScale(0.12, 0.5)
-statusDot.Size = UDim2.fromScale(0.08, 0.3)
-statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
-statusDot.BorderSizePixel = 0
-statusDot.ZIndex = 125
-statusDot.Parent = status
+local dot = Instance.new("Frame")
+dot.AnchorPoint = Vector2.new(0, 0.5)
+dot.Position = UDim2.fromScale(0.12, 0.5)
+dot.Size = UDim2.fromScale(0.08, 0.3)
+dot.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+dot.BorderSizePixel = 0
+dot.ZIndex = 120
+dot.Parent = status
 
 local dotCorner = Instance.new("UICorner")
 dotCorner.CornerRadius = UDim.new(1, 0)
-dotCorner.Parent = statusDot
+dotCorner.Parent = dot
 
-local statusText = Instance.new("TextLabel")
-statusText.Position = UDim2.fromScale(0.25, 0)
-statusText.Size = UDim2.fromScale(0.65, 1)
-statusText.BackgroundTransparency = 1
-statusText.Text = "ONLINE"
-statusText.TextColor3 = Color3.fromRGB(0, 255, 170)
-statusText.TextScaled = true
-statusText.Font = Enum.Font.GothamBold
-statusText.ZIndex = 125
-statusText.Parent = status
+local online = Instance.new("TextLabel")
+online.Position = UDim2.fromScale(0.25, 0)
+online.Size = UDim2.fromScale(0.65, 1)
+online.BackgroundTransparency = 1
+online.Text = "ONLINE"
+online.TextColor3 = Color3.fromRGB(0, 255, 170)
+online.TextScaled = true
+online.Font = Enum.Font.GothamBold
+online.ZIndex = 120
+online.Parent = status
 
 --========================================================--
--- REOPEN CIRCLE
+-- CERCHIO RIAPRI
 --========================================================--
 
 local reopen = Instance.new("TextButton")
-reopen.Name = "ReopenButton"
+reopen.Name = "Reopen"
 reopen.AnchorPoint = Vector2.new(0.5, 0)
 reopen.Position = UDim2.fromScale(0.5, 0.025)
 reopen.Size = UDim2.fromOffset(58, 58)
 reopen.BackgroundColor3 = Color3.fromRGB(9, 9, 17)
 reopen.BorderSizePixel = 0
 reopen.Text = "N"
-reopen.TextColor3 = C.White
+reopen.TextColor3 = White
 reopen.TextScaled = true
 reopen.Font = Enum.Font.GothamBlack
 reopen.AutoButtonColor = false
@@ -721,7 +617,7 @@ reopenStroke.Thickness = 2
 reopenStroke.Parent = reopen
 
 --========================================================--
--- RGB HUB
+-- RGB
 --========================================================--
 
 task.spawn(function()
@@ -762,46 +658,46 @@ task.spawn(function()
 end)
 
 --========================================================--
--- HUB OPEN ANIMATION
+-- HUB ENTRATA
 --========================================================--
 
-makeTween(
+Tween(
     hub,
-    0.8,
+    0.75,
     {
-        Size = UDim2.fromScale(0.58, 0.62),
-        BackgroundTransparency = 0.08
+        Size = UDim2.fromScale(0.58, 0.62)
     },
     Enum.EasingStyle.Back
 )
 
 --========================================================--
--- CLOSE HUB
+-- CHIUDI
 --========================================================--
 
 local function closeHub()
 
-    local animation = makeTween(
+    local t = Tween(
         hub,
-        0.55,
+        0.45,
         {
-            Size = UDim2.fromScale(0.42, 0.35),
-            BackgroundTransparency = 1
+            Size = UDim2.fromScale(0.01, 0.01)
         },
         Enum.EasingStyle.Back,
         Enum.EasingDirection.In
     )
 
-    animation.Completed:Wait()
+    t.Completed:Wait()
 
+    -- NASCONDE SOLAMENTE L'HUB
     hub.Visible = false
 
+    -- NESSUNO SFONDO VIENE CREATO
     reopen.Visible = true
     reopen.Size = UDim2.fromOffset(0, 0)
 
-    makeTween(
+    Tween(
         reopen,
-        0.55,
+        0.45,
         {
             Size = UDim2.fromOffset(58, 58)
         },
@@ -810,14 +706,14 @@ local function closeHub()
 end
 
 --========================================================--
--- OPEN HUB
+-- RIAPRI
 --========================================================--
 
 local function openHub()
 
-    makeTween(
+    Tween(
         reopen,
-        0.3,
+        0.25,
         {
             Size = UDim2.fromOffset(0, 0)
         },
@@ -825,30 +721,57 @@ local function openHub()
         Enum.EasingDirection.In
     )
 
-    task.wait(0.3)
+    task.wait(0.25)
 
     reopen.Visible = false
     hub.Visible = true
+    hub.Size = UDim2.fromScale(0.01, 0.01)
 
-    hub.Size = UDim2.fromScale(0.42, 0.35)
-    hub.BackgroundTransparency = 1
-
-    makeTween(
+    Tween(
         hub,
-        0.7,
+        0.65,
         {
-            Size = UDim2.fromScale(0.58, 0.62),
-            BackgroundTransparency = 0.08
+            Size = UDim2.fromScale(0.58, 0.62)
         },
         Enum.EasingStyle.Back
     )
 end
 
 --========================================================--
--- BUTTON CONNECTIONS
+-- HOVER X
 --========================================================--
 
-closeButton.MouseButton1Click:Connect(closeHub)
+close.MouseEnter:Connect(function()
+
+    Tween(
+        close,
+        0.15,
+        {
+            BackgroundColor3 = Color3.fromRGB(255, 25, 50),
+            Size = UDim2.fromScale(0.085, 0.65)
+        }
+    )
+
+end)
+
+close.MouseLeave:Connect(function()
+
+    Tween(
+        close,
+        0.15,
+        {
+            BackgroundColor3 = Red,
+            Size = UDim2.fromScale(0.075, 0.58)
+        }
+    )
+
+end)
+
+--========================================================--
+-- CLICK
+--========================================================--
+
+close.MouseButton1Click:Connect(closeHub)
 reopen.MouseButton1Click:Connect(openHub)
 
-print("NEGRO HUB — 100% LOADED")
+print("NEGRO HUB: LOADED SUCCESSFULLY")
