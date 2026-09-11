@@ -1,7 +1,6 @@
---[[ 
-    Negro Hub Premium Intro 
-    Effetti: RGB Gradient, Zoom Animation, CoreGui Stability
-    Ottimizzato per Xeno Executor
+--[[
+    NEGRO HUB — PREMIUM LOADER
+    Intro + Loading Screen + Progress Bar + RGB + Glow + Particles
 ]]
 
 local Players = game:GetService("Players")
@@ -9,107 +8,478 @@ local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 
--- Pulizia intro precedenti
-if CoreGui:FindFirstChild("NegroHubIntro") then
-    CoreGui.NegroHubIntro:Destroy()
-end
+--// =========================================================
+--// CLEANUP
+--// =========================================================
 
--- GUI principale
+pcall(function()
+    if CoreGui:FindFirstChild("NegroHubIntro") then
+        CoreGui.NegroHubIntro:Destroy()
+    end
+end)
+
+--// =========================================================
+--// GUI
+--// =========================================================
+
 local gui = Instance.new("ScreenGui")
 gui.Name = "NegroHubIntro"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
-gui.DisplayOrder = 999
+gui.DisplayOrder = 999999
 gui.Parent = CoreGui
 
--- Sfondo nero profondo
+-- Background
 local background = Instance.new("Frame")
 background.Size = UDim2.fromScale(1, 1)
-background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+background.BackgroundColor3 = Color3.fromRGB(2, 2, 5)
 background.BorderSizePixel = 0
-background.ZIndex = 1
 background.Parent = gui
 
--- Funzione per creare testo con gradiente animato
-local function createStyledText(text, size, pos, font)
-    local label = Instance.new("TextLabel")
-    label.Size = size
-    label.Position = pos
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextScaled = true
-    label.Font = font
-    label.TextTransparency = 1
-    label.ZIndex = 2
-    label.Parent = background
+-- Gradient background
+local bgGradient = Instance.new("UIGradient")
+bgGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(2, 2, 8)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10, 2, 18)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(1, 5, 12))
+})
+bgGradient.Rotation = 45
+bgGradient.Parent = background
 
-    -- Aggiungiamo un UIGradient per i colori
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170, 0, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))
-    }
-    gradient.Parent = label
+--// =========================================================
+--// RGB FUNCTION
+--// =========================================================
 
-    return label, gradient
+local function rgbColor(offset)
+    local hue = (os.clock() * 0.12 + offset) % 1
+    return Color3.fromHSV(hue, 0.85, 1)
 end
 
--- Funzione per l'animazione RGB continua
-local function startRGB(gradient)
+--// =========================================================
+--// VIGNETTE
+--// =========================================================
+
+local vignette = Instance.new("Frame")
+vignette.Size = UDim2.fromScale(1, 1)
+vignette.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+vignette.BackgroundTransparency = 0.55
+vignette.BorderSizePixel = 0
+vignette.ZIndex = 10
+vignette.Parent = background
+
+--// =========================================================
+--// PARTICLES
+--// =========================================================
+
+local particleFolder = Instance.new("Folder")
+particleFolder.Name = "Particles"
+particleFolder.Parent = background
+
+for i = 1, 35 do
+    local particle = Instance.new("Frame")
+    local size = math.random(1, 4)
+
+    particle.Size = UDim2.fromOffset(size, size)
+    particle.Position = UDim2.fromScale(
+        math.random(),
+        math.random()
+    )
+
+    particle.BackgroundColor3 = rgbColor(math.random())
+    particle.BackgroundTransparency = math.random(20, 70) / 100
+    particle.BorderSizePixel = 0
+    particle.ZIndex = 3
+    particle.Parent = particleFolder
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = particle
+
     task.spawn(function()
-        while gradient.Parent do
-            for i = 0, 1, 0.01 do
-                gradient.Offset = Vector2.new(i, 0)
-                task.wait(0.03)
-            end
+        while particle.Parent do
+            local newX = math.random()
+            local newY = math.random()
+
+            local tween = TweenService:Create(
+                particle,
+                TweenInfo.new(
+                    math.random(4, 9),
+                    Enum.EasingStyle.Sine,
+                    Enum.EasingDirection.InOut
+                ),
+                {
+                    Position = UDim2.fromScale(newX, newY),
+                    BackgroundTransparency = math.random(20, 80) / 100
+                }
+            )
+
+            tween:Play()
+            tween.Completed:Wait()
         end
     end)
 end
 
--- Funzione per l'effetto Zoom (Rende il testo "vivo")
-local function zoomEffect(obj)
-    obj.Size = UDim2.fromScale(0.8, 0.15) -- Parte leggermente più piccolo
-    TweenService:Create(obj, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.fromScale(1, 0.2)
-    }):Play()
+--// =========================================================
+--// MAIN CONTAINER
+--// =========================================================
+
+local container = Instance.new("Frame")
+container.AnchorPoint = Vector2.new(0.5, 0.5)
+container.Position = UDim2.fromScale(0.5, 0.5)
+container.Size = UDim2.fromScale(0.72, 0.42)
+container.BackgroundTransparency = 1
+container.ZIndex = 20
+container.Parent = background
+
+local scale = Instance.new("UIScale")
+scale.Scale = 0.82
+scale.Parent = container
+
+--// =========================================================
+--// LOGO
+--// =========================================================
+
+local logo = Instance.new("TextLabel")
+logo.AnchorPoint = Vector2.new(0.5, 0)
+logo.Position = UDim2.fromScale(0.5, 0.04)
+logo.Size = UDim2.fromScale(0.9, 0.24)
+logo.BackgroundTransparency = 1
+logo.Text = "NEGRO HUB"
+logo.TextColor3 = Color3.fromRGB(255, 255, 255)
+logo.TextScaled = true
+logo.Font = Enum.Font.GothamBlack
+logo.TextTransparency = 1
+logo.ZIndex = 25
+logo.Parent = container
+
+local logoGradient = Instance.new("UIGradient")
+logoGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 90)),
+    ColorSequenceKeypoint.new(0.35, Color3.fromRGB(170, 0, 255)),
+    ColorSequenceKeypoint.new(0.7, Color3.fromRGB(0, 200, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 150))
+})
+logoGradient.Parent = logo
+
+-- Glow behind logo
+local glow = Instance.new("Frame")
+glow.AnchorPoint = Vector2.new(0.5, 0.5)
+glow.Position = UDim2.fromScale(0.5, 0.15)
+glow.Size = UDim2.fromScale(0.45, 0.12)
+glow.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
+glow.BackgroundTransparency = 0.82
+glow.BorderSizePixel = 0
+glow.ZIndex = 21
+glow.Parent = container
+
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(1, 0)
+glowCorner.Parent = glow
+
+--// =========================================================
+--// PRESENTATION
+--// =========================================================
+
+local presentation = Instance.new("TextLabel")
+presentation.AnchorPoint = Vector2.new(0.5, 0)
+presentation.Position = UDim2.fromScale(0.5, 0.30)
+presentation.Size = UDim2.fromScale(0.9, 0.12)
+presentation.BackgroundTransparency = 1
+presentation.Text = "Negro di Fiducia presenta"
+presentation.TextColor3 = Color3.fromRGB(190, 190, 200)
+presentation.TextScaled = true
+presentation.Font = Enum.Font.GothamMedium
+presentation.TextTransparency = 1
+presentation.ZIndex = 25
+presentation.Parent = container
+
+--// =========================================================
+--// LOADING TEXT
+--// =========================================================
+
+local loadingText = Instance.new("TextLabel")
+loadingText.AnchorPoint = Vector2.new(0.5, 0)
+loadingText.Position = UDim2.fromScale(0.5, 0.48)
+loadingText.Size = UDim2.fromScale(0.95, 0.10)
+loadingText.BackgroundTransparency = 1
+loadingText.Text = "Loading script for this game"
+loadingText.TextColor3 = Color3.fromRGB(235, 235, 240)
+loadingText.TextScaled = true
+loadingText.Font = Enum.Font.GothamBold
+loadingText.TextTransparency = 1
+loadingText.ZIndex = 25
+loadingText.Parent = container
+
+local subText = Instance.new("TextLabel")
+subText.AnchorPoint = Vector2.new(0.5, 0)
+subText.Position = UDim2.fromScale(0.5, 0.58)
+subText.Size = UDim2.fromScale(0.9, 0.07)
+subText.BackgroundTransparency = 1
+subText.Text = "Please wait a minute..."
+subText.TextColor3 = Color3.fromRGB(120, 120, 135)
+subText.TextScaled = true
+subText.Font = Enum.Font.Gotham
+subText.TextTransparency = 1
+subText.ZIndex = 25
+subText.Parent = container
+
+--// =========================================================
+--// PROGRESS BAR
+--// =========================================================
+
+local barBackground = Instance.new("Frame")
+barBackground.AnchorPoint = Vector2.new(0.5, 0)
+barBackground.Position = UDim2.fromScale(0.5, 0.70)
+barBackground.Size = UDim2.fromScale(0.78, 0.045)
+barBackground.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+barBackground.BorderSizePixel = 0
+barBackground.ZIndex = 25
+barBackground.Parent = container
+
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(1, 0)
+barCorner.Parent = barBackground
+
+local barStroke = Instance.new("UIStroke")
+barStroke.Color = Color3.fromRGB(70, 70, 90)
+barStroke.Transparency = 0.45
+barStroke.Thickness = 1
+barStroke.Parent = barBackground
+
+local progress = Instance.new("Frame")
+progress.Size = UDim2.fromScale(0, 1)
+progress.BackgroundColor3 = Color3.fromRGB(170, 0, 255)
+progress.BorderSizePixel = 0
+progress.ZIndex = 26
+progress.Parent = barBackground
+
+local progressCorner = Instance.new("UICorner")
+progressCorner.CornerRadius = UDim.new(1, 0)
+progressCorner.Parent = progress
+
+local progressGradient = Instance.new("UIGradient")
+progressGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 100)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
+})
+progressGradient.Parent = progress
+
+--// =========================================================
+--// PERCENTAGE
+--// =========================================================
+
+local percentage = Instance.new("TextLabel")
+percentage.AnchorPoint = Vector2.new(0.5, 0)
+percentage.Position = UDim2.fromScale(0.5, 0.77)
+percentage.Size = UDim2.fromScale(0.3, 0.09)
+percentage.BackgroundTransparency = 1
+percentage.Text = "0%"
+percentage.TextColor3 = Color3.fromRGB(255, 255, 255)
+percentage.TextScaled = true
+percentage.Font = Enum.Font.GothamBold
+percentage.TextTransparency = 1
+percentage.ZIndex = 25
+percentage.Parent = container
+
+-- Status
+local status = Instance.new("TextLabel")
+status.AnchorPoint = Vector2.new(0.5, 0)
+status.Position = UDim2.fromScale(0.5, 0.87)
+status.Size = UDim2.fromScale(0.8, 0.06)
+status.BackgroundTransparency = 1
+status.Text = "Initializing..."
+status.TextColor3 = Color3.fromRGB(90, 90, 105)
+status.TextScaled = true
+status.Font = Enum.Font.Gotham
+status.TextTransparency = 1
+status.ZIndex = 25
+status.Parent = container
+
+--// =========================================================
+--// INTRO ANIMATION
+--// =========================================================
+
+TweenService:Create(
+    scale,
+    TweenInfo.new(1.1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+    {Scale = 1}
+):Play()
+
+for _, obj in ipairs({
+    logo,
+    presentation,
+    loadingText,
+    subText,
+    percentage,
+    status
+}) do
+    TweenService:Create(
+        obj,
+        TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {TextTransparency = 0}
+    ):Play()
 end
 
--- --- SEQUENZA DI AVVIO ---
+--// =========================================================
+--// RGB ANIMATION
+--// =========================================================
 
--- 1. Presentazione
-local introText, introGrad = createStyledText("Negro di Fiducia presenta", UDim2.fromScale(1, 0.2), UDim2.fromScale(0, 0.4), Enum.Font.GothamBold)
-startRGB(introGrad)
+task.spawn(function()
+    while gui.Parent do
+        local t = os.clock()
 
--- Fade In + Zoom
-TweenService:Create(introText, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-zoomEffect(introText)
-task.wait(3)
+        logoGradient.Offset = Vector2.new(
+            math.sin(t * 0.7) * 0.5,
+            0
+        )
 
--- Fade Out
-local fOut = TweenService:Create(introText, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
-fOut:Play()
-fOut.Completed:Wait()
-introText:Destroy()
+        progressGradient.Offset = Vector2.new(
+            math.sin(t * 1.4) * 0.5,
+            0
+        )
 
--- 2. Hub Principale (L'effetto WOW)
-local hubText, hubGrad = createStyledText("NEGRO HUB", UDim2.fromScale(1, 0.3), UDim2.fromScale(0, 0.35), Enum.Font.GothamBlack)
-startRGB(hubGrad)
+        glow.BackgroundColor3 = Color3.fromHSV(
+            (t * 0.08) % 1,
+            0.85,
+            1
+        )
 
--- Fade In + Zoom più aggressivo
-TweenService:Create(hubText, TweenInfo.new(1.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-zoomEffect(hubText)
-task.wait(3.5)
+        task.wait()
+    end
+end)
 
--- Scomparsa finale epica
-local hubOut = TweenService:Create(hubText, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1, Size = UDim2.fromScale(1.2, 0.4)})
-local bgOut = TweenService:Create(background, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+--// =========================================================
+--// LOADING SEQUENCE
+--// =========================================================
 
-hubOut:Play()
-bgOut:Play()
+local loadingMessages = {
+    {0,  "Initializing Negro Hub..."},
+    {15, "Checking game environment..."},
+    {30, "Loading core modules..."},
+    {45, "Preparing interface..."},
+    {60, "Loading features..."},
+    {75, "Optimizing scripts..."},
+    {88, "Almost ready..."},
+    {96, "Finalizing..."},
+    {100, "Successfully loaded!"}
+}
 
-hubOut.Completed:Wait()
-gui:Destroy()
+local function updateStatus(value)
+    local message = "Loading..."
 
-print("✨ Negro Hub Premium caricato con successo!")
+    for i = #loadingMessages, 1, -1 do
+        if value >= loadingMessages[i][1] then
+            message = loadingMessages[i][2]
+            break
+        end
+    end
+
+    status.Text = message
+end
+
+-- Progress smoothing
+for i = 0, 100 do
+
+    percentage.Text = tostring(i) .. "%"
+
+    TweenService:Create(
+        progress,
+        TweenInfo.new(
+            0.12,
+            Enum.EasingStyle.Quad,
+            Enum.EasingDirection.Out
+        ),
+        {
+            Size = UDim2.fromScale(i / 100, 1)
+        }
+    ):Play()
+
+    updateStatus(i)
+
+    -- Simula un caricamento naturale
+    local delayTime
+
+    if i < 20 then
+        delayTime = 0.045
+    elseif i < 60 then
+        delayTime = 0.065
+    elseif i < 85 then
+        delayTime = 0.085
+    else
+        delayTime = 0.11
+    end
+
+    task.wait(delayTime)
+end
+
+--// =========================================================
+--// COMPLETED EFFECT
+--// =========================================================
+
+status.Text = "✓  NEGRO HUB READY"
+
+TweenService:Create(
+    percentage,
+    TweenInfo.new(0.3),
+    {
+        TextColor3 = Color3.fromRGB(0, 255, 170)
+    }
+):Play()
+
+TweenService:Create(
+    progress,
+    TweenInfo.new(0.5, Enum.EasingStyle.Quint),
+    {
+        BackgroundColor3 = Color3.fromRGB(0, 255, 170)
+    }
+):Play()
+
+task.wait(1.2)
+
+--// =========================================================
+--// EPIC EXIT
+--// =========================================================
+
+local objectsToFade = {
+    logo,
+    presentation,
+    loadingText,
+    subText,
+    percentage,
+    status
+}
+
+for _, obj in ipairs(objectsToFade) do
+    TweenService:Create(
+        obj,
+        TweenInfo.new(0.65, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {
+            TextTransparency = 1
+        }
+    ):Play()
+end
+
+TweenService:Create(
+    scale,
+    TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+    {
+        Scale = 1.12
+    }
+):Play()
+
+TweenService:Create(
+    background,
+    TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+    {
+        BackgroundTransparency = 1
+    }
+):Play()
+
+task.wait(1)
+
+pcall(function()
+    gui:Destroy()
+end)
+
+print("NEGRO HUB — Successfully loaded!")
