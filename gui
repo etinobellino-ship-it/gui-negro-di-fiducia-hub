@@ -1,0 +1,85 @@
+--[[ 
+    Negro Hub Intro 
+    Ottimizzato per Xeno Executor
+]]
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui") -- Usiamo CoreGui per evitare che l'intro sparisca quando muori
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Rimuoviamo eventuali intro precedenti per evitare sovrapposizioni
+if CoreGui:FindFirstChild("NegroHubIntro") then
+    CoreGui.NegroHubIntro:Destroy()
+end
+
+-- GUI principale (Parentata a CoreGui per massima stabilità)
+local gui = Instance.new("ScreenGui")
+gui.Name = "NegroHubIntro"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 999 -- La mette sopra ogni altra cosa
+gui.Parent = CoreGui
+
+-- Sfondo nero
+local background = Instance.new("Frame")
+background.Size = UDim2.fromScale(1, 1)
+background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+background.BorderSizePixel = 0
+background.ZIndex = 1
+background.Parent = gui
+
+-- Testo presentazione
+local intro = Instance.new("TextLabel")
+intro.Size = UDim2.fromScale(1, 0.2)
+intro.Position = UDim2.fromScale(0, 0.4)
+intro.BackgroundTransparency = 1
+intro.Text = "Negro di Fiducia presenta"
+intro.TextColor3 = Color3.fromRGB(255, 255, 255)
+intro.TextScaled = true
+intro.Font = Enum.Font.GothamBold
+intro.TextTransparency = 1
+intro.ZIndex = 2
+intro.Parent = background
+
+-- Esecuzione Animazioni
+local function playTween(obj, info, goal)
+    local tween = TweenService:Create(obj, info, goal)
+    tween:Play()
+    return tween
+end
+
+-- Sequenza 1: Fade in presentazione
+playTween(intro, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
+task.wait(2.5)
+
+-- Sequenza 2: Fade out presentazione
+local fOut = playTween(intro, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
+fOut.Completed:Wait()
+
+-- Sequenza 3: Hub Titolo
+local hub = Instance.new("TextLabel")
+hub.Size = UDim2.fromScale(1, 0.25)
+hub.Position = UDim2.fromScale(0, 0.375)
+hub.BackgroundTransparency = 1
+hub.Text = "Negro Hub"
+hub.TextColor3 = Color3.fromRGB(255, 255, 255)
+hub.TextScaled = true
+hub.Font = Enum.Font.GothamBlack
+hub.TextTransparency = 1
+hub.ZIndex = 2
+hub.Parent = background
+
+playTween(hub, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
+task.wait(3)
+
+-- Sequenza finale: Scomparsa totale
+local hubOut = playTween(hub, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
+local bgOut = playTween(background, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+
+hubOut.Completed:Wait()
+gui:Destroy()
+
+print("Negro Hub caricato con successo!")
