@@ -1,404 +1,64 @@
---[[
-    NEGRO HUB — Ultimate UI (FIXED)
-    Xeno Executor Compatible
-    Features: ESP, Tracers, Fly, NoClip, Speed, Jump, Anti-AFK, etc.
-]]
-
 --========================================================--
--- SERVICES
+--                 NEGRO HUB - FINAL FIX                  --
 --========================================================--
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
+local TweenService = game:GetService("TweenService")
 
 --========================================================--
--- CONFIG & STATE
---========================================================--
-
-local CONFIG = {
-    WalkSpeed = 16,
-    JumpPower = 50,
-    FlySpeed = 50,
-    ESPColor = Color3.fromRGB(255, 0, 130),
-    TracerColor = Color3.fromRGB(145, 0, 255),
-    TeamCheck = false,
-    HideKey = Enum.KeyCode.RightShift
-}
-
-local STATE = {
-    Fly = false,
-    NoClip = false,
-    InfiniteJump = false,
-    ESP = false,
-    Tracers = false,
-    FullBright = false,
-    AntiAFK = false,
-    SpeedEnabled = false,
-    JumpEnabled = false,
-    Connections = {}
-}
-
---========================================================--
--- CLEAN OLD GUI
+-- CLEANUP COMPLETO
 --========================================================--
 
 pcall(function()
-    local old = CoreGui:FindFirstChild("NegroHubUltimate")
-    if old then old:Destroy() end
-end)
-
--- Cleanup funzione
-local function cleanup()
-    for _, conn in pairs(STATE.Connections) do
-        if conn then conn:Disconnect() end
-    end
-    STATE.Connections = {}
-    
-    -- Rimuovi ESP esistenti
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local esp = player.Character and player.Character:FindFirstChild("ESP_Box")
-            if esp then esp:Destroy() end
-            local tracer = player.Character and player.Character:FindFirstChild("ESP_Tracer")
-            if tracer then tracer:Destroy() end
+    for _, v in ipairs(CoreGui:GetChildren()) do
+        if v.Name == "NegroHubUltra"
+        or v.Name == "NegroHubIntro"
+        or v.Name == "NegroHub"
+        then
+            v:Destroy()
         end
     end
-end
+end)
 
 --========================================================--
--- COLORS
+-- COLORI
 --========================================================--
 
-local COLORS = {
-    Pink = Color3.fromRGB(255, 0, 130),
-    Purple = Color3.fromRGB(145, 0, 255),
-    Blue = Color3.fromRGB(0, 180, 255),
-    Cyan = Color3.fromRGB(0, 255, 220),
-    Background = Color3.fromRGB(3, 3, 8),
-    Panel = Color3.fromRGB(12, 12, 20),
-    Panel2 = Color3.fromRGB(20, 20, 31),
-    White = Color3.fromRGB(245, 245, 255),
-    Gray = Color3.fromRGB(145, 145, 165),
-    Red = Color3.fromRGB(255, 45, 60),
-    Green = Color3.fromRGB(0, 220, 130)
-}
+local Pink = Color3.fromRGB(255, 0, 130)
+local Purple = Color3.fromRGB(145, 0, 255)
+local Blue = Color3.fromRGB(0, 190, 255)
+local Cyan = Color3.fromRGB(0, 255, 220)
+local Red = Color3.fromRGB(255, 45, 60)
+
+local White = Color3.fromRGB(245, 245, 255)
+local Gray = Color3.fromRGB(135, 135, 155)
 
 --========================================================--
--- UTILITIES
+-- TWEEN
 --========================================================--
 
-local function tween(object, duration, properties, style, direction)
-    if not object or not object.Parent then return end
-    local info = TweenInfo.new(duration, style or Enum.EasingStyle.Quint, direction or Enum.EasingDirection.Out)
-    local t = TweenService:Create(object, info, properties)
+local function Tween(obj, time, props, style, direction)
+
+    local info = TweenInfo.new(
+        time,
+        style or Enum.EasingStyle.Quint,
+        direction or Enum.EasingDirection.Out
+    )
+
+    local t = TweenService:Create(obj, info, props)
     t:Play()
+
     return t
 end
 
-local function notify(text)
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "NEGRO HUB",
-            Text = text,
-            Duration = 3
-        })
-    end)
-end
-
 --========================================================--
--- CHARACTER UTILITIES
---========================================================--
-
-local function getCharacter()
-    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-end
-
-local function getHumanoid()
-    local char = getCharacter()
-    return char:FindFirstChildOfClass("Humanoid")
-end
-
-local function getRootPart()
-    local char = getCharacter()
-    return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-end
-
---========================================================--
--- ESP SYSTEM
---========================================================--
-
-local ESP_FOLDER = Instance.new("Folder")
-ESP_FOLDER.Name = "NegroESP"
-ESP_FOLDER.Parent = CoreGui
-
-local function createESP(player)
-    if player == LocalPlayer then return end
-    
-    local function setupCharacter(character)
-        if not character then return end
-        
-        -- ESP Box
-        local head = character:WaitForChild("Head", 2)
-        if not head then return end
-        
-        local esp = Instance.new("BillboardGui")
-        esp.Name = "ESP_Box"
-        esp.AlwaysOnTop = true
-        esp.Size = UDim2.new(0, 100, 0, 40)
-        esp.StudsOffset = Vector3.new(0, 3, 0)
-        esp.Adornee = head
-        esp.Parent = ESP_FOLDER
-        
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundColor3 = CONFIG.ESPColor
-        frame.BackgroundTransparency = 0.8
-        frame.BorderSizePixel = 0
-        frame.Parent = esp
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 4)
-        corner.Parent = frame
-        
-        local name = Instance.new("TextLabel")
-        name.Size = UDim2.new(1, 0, 0, 20)
-        name.Position = UDim2.new(0, 0, -0.5, 0)
-        name.BackgroundTransparency = 1
-        name.Text = player.Name
-        name.TextColor3 = CONFIG.ESPColor
-        name.TextScaled = true
-        name.Font = Enum.Font.GothamBold
-        name.Parent = esp
-        
-        -- Tracer
-        local tracer = Instance.new("Frame")
-        tracer.Name = "Tracer_Line"
-        tracer.BackgroundColor3 = CONFIG.TracerColor
-        tracer.BorderSizePixel = 0
-        tracer.Visible = false
-        tracer.Parent = ESP_FOLDER
-        
-        -- Update connection
-        local conn = RunService.RenderStepped:Connect(function()
-            if not esp.Parent or not tracer.Parent then return end
-            if not player.Character or not player.Character:FindFirstChild("Head") then
-                esp:Destroy()
-                tracer:Destroy()
-                return
-            end
-            
-            local headPos = player.Character.Head.Position
-            local screenPos, onScreen = Camera:WorldToViewportPoint(headPos)
-            
-            if onScreen and STATE.Tracers then
-                local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                local target = Vector2.new(screenPos.X, screenPos.Y)
-                
-                local distance = (target - center).Magnitude
-                local angle = math.atan2(target.Y - center.Y, target.X - center.X)
-                
-                tracer.Size = UDim2.new(0, distance, 0, 1)
-                tracer.Position = UDim2.new(0, center.X, 0, center.Y)
-                tracer.Rotation = math.deg(angle)
-                tracer.Visible = true
-            else
-                tracer.Visible = false
-            end
-        end)
-        
-        table.insert(STATE.Connections, conn)
-        
-        character.AncestryChanged:Connect(function()
-            esp:Destroy()
-            tracer:Destroy()
-        end)
-    end
-    
-    if player.Character then
-        setupCharacter(player.Character)
-    end
-    
-    player.CharacterAdded:Connect(setupCharacter)
-end
-
---========================================================--
--- FLY SYSTEM
---========================================================--
-
-local flyBodyGyro, flyBodyVel
-
-local function startFly()
-    local char = getCharacter()
-    local root = getRootPart()
-    if not root then return end
-    
-    flyBodyGyro = Instance.new("BodyGyro")
-    flyBodyGyro.P = 9e4
-    flyBodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    flyBodyGyro.CFrame = root.CFrame
-    flyBodyGyro.Parent = root
-    
-    flyBodyVel = Instance.new("BodyVelocity")
-    flyBodyVel.Velocity = Vector3.new(0, 0, 0)
-    flyBodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    flyBodyVel.Parent = root
-    
-    local flyConn = RunService.RenderStepped:Connect(function()
-        if not STATE.Fly then return end
-        if not flyBodyGyro or not flyBodyVel then return end
-        
-        local camCF = Camera.CFrame
-        local moveDir = Vector3.new(0, 0, 0)
-        
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-            moveDir = moveDir + camCF.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-            moveDir = moveDir - camCF.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-            moveDir = moveDir - camCF.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-            moveDir = moveDir + camCF.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-            moveDir = moveDir + Vector3.new(0, 1, 0)
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-            moveDir = moveDir - Vector3.new(0, 1, 0)
-        end
-        
-        if moveDir.Magnitude > 0 then
-            moveDir = moveDir.Unit * CONFIG.FlySpeed
-        end
-        
-        flyBodyVel.Velocity = moveDir
-        flyBodyGyro.CFrame = camCF
-    end)
-    
-    table.insert(STATE.Connections, flyConn)
-    notify("Fly attivato!")
-end
-
-local function stopFly()
-    if flyBodyGyro then flyBodyGyro:Destroy() end
-    if flyBodyVel then flyBodyVel:Destroy() end
-    flyBodyGyro, flyBodyVel = nil, nil
-    notify("Fly disattivato!")
-end
-
---========================================================--
--- NOCLIP SYSTEM
---========================================================--
-
-local noclipConn
-
-local function startNoClip()
-    noclipConn = RunService.Stepped:Connect(function()
-        if not STATE.NoClip then return end
-        local char = getCharacter()
-        for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-    end)
-    table.insert(STATE.Connections, noclipConn)
-    notify("NoClip attivato!")
-end
-
-local function stopNoClip()
-    if noclipConn then noclipConn:Disconnect() end
-    local char = getCharacter()
-    for _, part in pairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = true
-        end
-    end
-    notify("NoClip disattivato!")
-end
-
---========================================================--
--- INFINITE JUMP
---========================================================--
-
-local infJumpConn
-
-local function startInfiniteJump()
-    infJumpConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == Enum.KeyCode.Space and STATE.InfiniteJump then
-            local hum = getHumanoid()
-            if hum then
-                hum:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-        end
-    end)
-    table.insert(STATE.Connections, infJumpConn)
-end
-
---========================================================--
--- ANTI AFK
---========================================================--
-
-local antiAfkConn
-
-local function startAntiAFK()
-    antiAfkConn = LocalPlayer.Idled:Connect(function()
-        if STATE.AntiAFK then
-            game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
-            wait(1)
-            game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
-        end
-    end)
-    table.insert(STATE.Connections, antiAfkConn)
-    notify("Anti-AFK attivato!")
-end
-
---========================================================--
--- FULL BRIGHT
---========================================================--
-
-local originalBrightness = Lighting.Brightness
-local originalClockTime = Lighting.ClockTime
-local fullBrightConn
-
-local function startFullBright()
-    Lighting.Brightness = 2
-    Lighting.ClockTime = 14
-    Lighting.GlobalShadows = false
-    
-    fullBrightConn = RunService.RenderStepped:Connect(function()
-        if STATE.FullBright then
-            Lighting.Brightness = 2
-            Lighting.GlobalShadows = false
-        end
-    end)
-    table.insert(STATE.Connections, fullBrightConn)
-end
-
-local function stopFullBright()
-    Lighting.Brightness = originalBrightness
-    Lighting.ClockTime = originalClockTime
-    Lighting.GlobalShadows = true
-    if fullBrightConn then fullBrightConn:Disconnect() end
-end
-
---========================================================--
--- ROOT GUI
+-- SCREEN GUI
+-- IMPORTANTE:
+-- QUESTA GUI NON HA NESSUNO SFONDO
 --========================================================--
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "NegroHubUltimate"
+gui.Name = "NegroHubUltra"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 999999
@@ -406,76 +66,340 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = CoreGui
 
 --========================================================--
--- INTRO (abbreviata per Xeno)
+-- INTRO
 --========================================================--
 
 local intro = Instance.new("Frame")
 intro.Name = "Intro"
 intro.Size = UDim2.fromScale(1, 1)
-intro.BackgroundColor3 = COLORS.Background
+intro.Position = UDim2.fromScale(0, 0)
+intro.BackgroundColor3 = Color3.fromRGB(2, 2, 7)
 intro.BorderSizePixel = 0
 intro.ZIndex = 1
 intro.Parent = gui
 
+-- Gradient
+local introGradient = Instance.new("UIGradient")
+introGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(2, 2, 8)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 3, 28)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(2, 7, 18))
+})
+introGradient.Rotation = 35
+introGradient.Parent = intro
+
+--========================================================--
+-- GLOW
+--========================================================--
+
+local glow = Instance.new("Frame")
+glow.AnchorPoint = Vector2.new(0.5, 0.5)
+glow.Position = UDim2.fromScale(0.5, 0.48)
+glow.Size = UDim2.fromScale(0.7, 0.4)
+glow.BackgroundColor3 = Purple
+glow.BackgroundTransparency = 0.94
+glow.BorderSizePixel = 0
+glow.ZIndex = 2
+glow.Parent = intro
+
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(1, 0)
+glowCorner.Parent = glow
+
+--========================================================--
+-- PARTICELLE
+--========================================================--
+
+local particles = Instance.new("Folder")
+particles.Name = "Particles"
+particles.Parent = intro
+
+for i = 1, 45 do
+
+    local p = Instance.new("Frame")
+
+    local s = math.random(1, 4)
+
+    p.Size = UDim2.fromOffset(s, s)
+    p.Position = UDim2.fromScale(
+        math.random(),
+        math.random()
+    )
+
+    p.BackgroundColor3 = Color3.fromHSV(
+        math.random(),
+        0.8,
+        1
+    )
+
+    p.BackgroundTransparency =
+        math.random(40, 90) / 100
+
+    p.BorderSizePixel = 0
+    p.ZIndex = 3
+    p.Parent = particles
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(1, 0)
+    c.Parent = p
+
+    task.spawn(function()
+
+        while p.Parent do
+
+            local destination = UDim2.fromScale(
+                math.random(),
+                math.random()
+            )
+
+            Tween(
+                p,
+                math.random(3, 7),
+                {
+                    Position = destination
+                },
+                Enum.EasingStyle.Sine,
+                Enum.EasingDirection.InOut
+            )
+
+            task.wait(math.random(2, 5))
+        end
+
+    end)
+end
+
+--========================================================--
+-- INTRO CONTAINER
+--========================================================--
+
 local introContainer = Instance.new("Frame")
 introContainer.AnchorPoint = Vector2.new(0.5, 0.5)
 introContainer.Position = UDim2.fromScale(0.5, 0.5)
-introContainer.Size = UDim2.fromScale(0.8, 0.42)
+introContainer.Size = UDim2.fromScale(0.8, 0.4)
 introContainer.BackgroundTransparency = 1
 introContainer.ZIndex = 10
 introContainer.Parent = intro
 
+local introScale = Instance.new("UIScale")
+introScale.Scale = 0.8
+introScale.Parent = introContainer
+
+--========================================================--
+-- PRESENTAZIONE
+--========================================================--
+
 local presentation = Instance.new("TextLabel")
-presentation.Size = UDim2.fromScale(1, 0.3)
-presentation.Position = UDim2.fromScale(0, 0.2)
+presentation.AnchorPoint = Vector2.new(0.5, 0)
+presentation.Position = UDim2.fromScale(0.5, 0.2)
+presentation.Size = UDim2.fromScale(0.95, 0.2)
 presentation.BackgroundTransparency = 1
-presentation.Text = "NEGRO HUB"
-presentation.TextColor3 = COLORS.Pink
+presentation.Text = "Negro di Fiducia presenta"
+presentation.TextColor3 = White
 presentation.TextScaled = true
-presentation.Font = Enum.Font.GothamBlack
+presentation.Font = Enum.Font.GothamBold
+presentation.TextTransparency = 1
 presentation.ZIndex = 20
 presentation.Parent = introContainer
 
-local loadingText = Instance.new("TextLabel")
-loadingText.Position = UDim2.fromScale(0, 0.6)
-loadingText.Size = UDim2.fromScale(1, 0.1)
-loadingText.BackgroundTransparency = 1
-loadingText.Text = "CARICAMENTO..."
-loadingText.TextColor3 = COLORS.White
-loadingText.TextScaled = true
-loadingText.Font = Enum.Font.GothamMedium
-loadingText.ZIndex = 20
-loadingText.Parent = introContainer
+local presentationGradient = Instance.new("UIGradient")
+presentationGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Cyan)
+})
+presentationGradient.Parent = presentation
 
--- Loading bar
-local bar = Instance.new("Frame")
-bar.Position = UDim2.fromScale(0.1, 0.75)
-bar.Size = UDim2.fromScale(0.8, 0.05)
-bar.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-bar.BorderSizePixel = 0
-bar.ZIndex = 20
-bar.Parent = introContainer
+--========================================================--
+-- LOADING TEXT
+--========================================================--
+
+local loading = Instance.new("TextLabel")
+loading.AnchorPoint = Vector2.new(0.5, 0)
+loading.Position = UDim2.fromScale(0.5, 0.46)
+loading.Size = UDim2.fromScale(0.9, 0.08)
+loading.BackgroundTransparency = 1
+loading.Text = "LOADING SCRIPT FOR THIS GAME"
+loading.TextColor3 = Gray
+loading.TextScaled = true
+loading.Font = Enum.Font.GothamMedium
+loading.TextTransparency = 1
+loading.ZIndex = 20
+loading.Parent = introContainer
+
+--========================================================--
+-- BAR ESTERNA
+--========================================================--
+
+local barBackground = Instance.new("Frame")
+barBackground.AnchorPoint = Vector2.new(0.5, 0)
+barBackground.Position = UDim2.fromScale(0.5, 0.59)
+barBackground.Size = UDim2.fromScale(0.65, 0.045)
+barBackground.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+barBackground.BorderSizePixel = 0
+barBackground.BackgroundTransparency = 1
+barBackground.ZIndex = 20
+barBackground.Parent = introContainer
+
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(1, 0)
+barCorner.Parent = barBackground
+
+local barStroke = Instance.new("UIStroke")
+barStroke.Thickness = 1
+barStroke.Color = Purple
+barStroke.Transparency = 0.25
+barStroke.Parent = barBackground
+
+--========================================================--
+-- PROGRESS
+--========================================================--
 
 local progress = Instance.new("Frame")
 progress.Size = UDim2.fromScale(0, 1)
-progress.BackgroundColor3 = COLORS.Purple
+progress.BackgroundColor3 = Purple
 progress.BorderSizePixel = 0
 progress.ZIndex = 21
-progress.Parent = bar
+progress.Parent = barBackground
+
+local progressCorner = Instance.new("UICorner")
+progressCorner.CornerRadius = UDim.new(1, 0)
+progressCorner.Parent = progress
+
+local progressGradient = Instance.new("UIGradient")
+progressGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Cyan)
+})
+progressGradient.Parent = progress
 
 --========================================================--
--- HUB MAIN
+-- PERCENTUALE
+--========================================================--
+
+local percent = Instance.new("TextLabel")
+percent.AnchorPoint = Vector2.new(0.5, 0)
+percent.Position = UDim2.fromScale(0.5, 0.67)
+percent.Size = UDim2.fromScale(0.25, 0.08)
+percent.BackgroundTransparency = 1
+percent.Text = "0%"
+percent.TextColor3 = White
+percent.TextScaled = true
+percent.Font = Enum.Font.GothamBold
+percent.TextTransparency = 1
+percent.ZIndex = 20
+percent.Parent = introContainer
+
+--========================================================--
+-- RGB INTRO
+--========================================================--
+
+task.spawn(function()
+
+    while intro.Parent do
+
+        local t = os.clock()
+
+        presentationGradient.Offset =
+            Vector2.new(math.sin(t * 0.8) * 0.5, 0)
+
+        progressGradient.Offset =
+            Vector2.new(math.sin(t * 1.2) * 0.5, 0)
+
+        glow.BackgroundColor3 =
+            Color3.fromHSV(
+                (t * 0.08) % 1,
+                0.9,
+                1
+            )
+
+        task.wait()
+    end
+
+end)
+
+--========================================================--
+-- INTRO ENTRATA
+--========================================================--
+
+Tween(
+    introScale,
+    1,
+    {Scale = 1}
+)
+
+Tween(
+    presentation,
+    0.8,
+    {TextTransparency = 0}
+)
+
+Tween(
+    loading,
+    0.8,
+    {TextTransparency = 0}
+)
+
+Tween(
+    barBackground,
+    0.8,
+    {BackgroundTransparency = 0.1}
+)
+
+Tween(
+    percent,
+    0.8,
+    {TextTransparency = 0}
+)
+
+task.wait(0.5)
+
+--========================================================--
+-- CARICAMENTO
+--========================================================--
+
+for i = 0, 100 do
+
+    percent.Text = i .. "%"
+
+    Tween(
+        progress,
+        0.045,
+        {
+            Size = UDim2.fromScale(i / 100, 1)
+        },
+        Enum.EasingStyle.Linear
+    )
+
+    task.wait(0.03)
+end
+
+percent.Text = "100%"
+
+task.wait(0.5)
+
+--========================================================--
+-- IMPORTANTISSIMO:
+-- DISTRUGGI COMPLETAMENTE L'INTRO
+--========================================================--
+
+intro:Destroy()
+
+--========================================================--
+-- HUB
+--
+-- QUESTA PARTE NON HA ALCUN FRAME FULL SCREEN NERO
 --========================================================--
 
 local hub = Instance.new("Frame")
 hub.Name = "Hub"
 hub.AnchorPoint = Vector2.new(0.5, 0.5)
 hub.Position = UDim2.fromScale(0.5, 0.5)
-hub.Size = UDim2.fromScale(0.62, 0.70)
-hub.BackgroundColor3 = COLORS.Panel
+hub.Size = UDim2.fromScale(0.01, 0.01)
+hub.BackgroundColor3 = Color3.fromRGB(10, 10, 18)
+hub.BackgroundTransparency = 0.05
 hub.BorderSizePixel = 0
 hub.ZIndex = 100
-hub.Visible = false
 hub.Parent = gui
 
 local hubCorner = Instance.new("UICorner")
@@ -484,14 +408,27 @@ hubCorner.Parent = hub
 
 local hubStroke = Instance.new("UIStroke")
 hubStroke.Thickness = 2
-hubStroke.Color = COLORS.Purple
+hubStroke.Transparency = 0.1
 hubStroke.Parent = hub
 
--- Header
+local hubGradient = Instance.new("UIGradient")
+hubGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 8, 38)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8, 12, 25)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(22, 5, 27))
+})
+hubGradient.Rotation = 45
+hubGradient.Parent = hub
+
+--========================================================--
+-- HEADER
+--========================================================--
+
 local header = Instance.new("Frame")
-header.Position = UDim2.fromScale(0.025, 0.025)
-header.Size = UDim2.fromScale(0.95, 0.16)
-header.BackgroundColor3 = COLORS.Panel2
+header.Position = UDim2.fromScale(0.035, 0.035)
+header.Size = UDim2.fromScale(0.93, 0.18)
+header.BackgroundColor3 = Color3.fromRGB(17, 17, 28)
+header.BackgroundTransparency = 0.1
 header.BorderSizePixel = 0
 header.ZIndex = 110
 header.Parent = hub
@@ -500,564 +437,341 @@ local headerCorner = Instance.new("UICorner")
 headerCorner.CornerRadius = UDim.new(0, 14)
 headerCorner.Parent = header
 
--- Title
-local title = Instance.new("TextLabel")
-title.Position = UDim2.fromScale(0.04, 0.12)
-title.Size = UDim2.fromScale(0.65, 0.5)
-title.BackgroundTransparency = 1
-title.Text = "NEGRO HUB"
-title.TextColor3 = COLORS.White
-title.TextScaled = true
-title.Font = Enum.Font.GothamBlack
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.ZIndex = 115
-title.Parent = header
+--========================================================--
+-- HUB TITLE
+--========================================================--
 
-local titleGradient = Instance.new("UIGradient")
-titleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, COLORS.Pink),
-    ColorSequenceKeypoint.new(0.5, COLORS.Purple),
-    ColorSequenceKeypoint.new(1, COLORS.Blue)
+local hubTitle = Instance.new("TextLabel")
+hubTitle.Position = UDim2.fromScale(0.05, 0.1)
+hubTitle.Size = UDim2.fromScale(0.68, 0.5)
+hubTitle.BackgroundTransparency = 1
+hubTitle.Text = "NEGRO HUB"
+hubTitle.TextColor3 = White
+hubTitle.TextScaled = true
+hubTitle.Font = Enum.Font.GothamBlack
+hubTitle.TextXAlignment = Enum.TextXAlignment.Left
+hubTitle.ZIndex = 115
+hubTitle.Parent = header
+
+local hubTitleGradient = Instance.new("UIGradient")
+hubTitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Blue)
 })
-titleGradient.Parent = title
+hubTitleGradient.Parent = hubTitle
 
--- Close & Minimize
+local subtitle = Instance.new("TextLabel")
+subtitle.Position = UDim2.fromScale(0.052, 0.61)
+subtitle.Size = UDim2.fromScale(0.6, 0.25)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "Premium Script Hub"
+subtitle.TextColor3 = Gray
+subtitle.TextScaled = true
+subtitle.Font = Enum.Font.GothamMedium
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+subtitle.ZIndex = 115
+subtitle.Parent = header
+
+--========================================================--
+-- X ROSSA
+--========================================================--
+
 local close = Instance.new("TextButton")
 close.AnchorPoint = Vector2.new(1, 0.5)
 close.Position = UDim2.fromScale(0.97, 0.5)
-close.Size = UDim2.fromScale(0.07, 0.62)
-close.BackgroundColor3 = COLORS.Red
+close.Size = UDim2.fromScale(0.075, 0.58)
+close.BackgroundColor3 = Red
+close.BorderSizePixel = 0
 close.Text = "×"
-close.TextColor3 = COLORS.White
+close.TextColor3 = White
 close.TextScaled = true
-close.Font = Enum.Font.GothamBlack
+close.Font = Enum.Font.GothamBold
 close.AutoButtonColor = false
 close.ZIndex = 120
 close.Parent = header
 
-local minimize = Instance.new("TextButton")
-minimize.AnchorPoint = Vector2.new(1, 0.5)
-minimize.Position = UDim2.fromScale(0.885, 0.5)
-minimize.Size = UDim2.fromScale(0.07, 0.62)
-minimize.BackgroundColor3 = Color3.fromRGB(55, 55, 70)
-minimize.Text = "−"
-minimize.TextColor3 = COLORS.White
-minimize.TextScaled = true
-minimize.Font = Enum.Font.GothamBlack
-minimize.AutoButtonColor = false
-minimize.ZIndex = 120
-minimize.Parent = header
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 10)
+closeCorner.Parent = close
 
--- Body
-local body = Instance.new("Frame")
-body.Position = UDim2.fromScale(0.025, 0.205)
-body.Size = UDim2.fromScale(0.95, 0.77)
-body.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
-body.BorderSizePixel = 0
-body.ZIndex = 105
-body.Parent = hub
+local closeStroke = Instance.new("UIStroke")
+closeStroke.Color = Color3.fromRGB(255, 120, 130)
+closeStroke.Thickness = 1
+closeStroke.Parent = close
 
-local sidebar = Instance.new("Frame")
-sidebar.Position = UDim2.fromScale(0.02, 0.03)
-sidebar.Size = UDim2.fromScale(0.22, 0.94)
-sidebar.BackgroundColor3 = Color3.fromRGB(13, 13, 22)
-sidebar.BorderSizePixel = 0
-sidebar.ZIndex = 110
-sidebar.Parent = body
+--========================================================--
+-- CONTENT
+--========================================================--
 
 local content = Instance.new("Frame")
-content.Position = UDim2.fromScale(0.26, 0.03)
-content.Size = UDim2.fromScale(0.72, 0.94)
-content.BackgroundColor3 = Color3.fromRGB(10, 10, 17)
+content.Position = UDim2.fromScale(0.035, 0.245)
+content.Size = UDim2.fromScale(0.93, 0.71)
+content.BackgroundColor3 = Color3.fromRGB(5, 5, 11)
+content.BackgroundTransparency = 0.08
 content.BorderSizePixel = 0
 content.ZIndex = 110
-content.Parent = body
+content.Parent = hub
 
---========================================================--
--- UI HELPERS
---========================================================--
-
-local function createTab(name)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.fromScale(0.88, 0.12)
-    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-    btn.Text = name
-    btn.TextColor3 = COLORS.Gray
-    btn.TextScaled = true
-    btn.Font = Enum.Font.GothamBold
-    btn.AutoButtonColor = false
-    btn.ZIndex = 120
-    btn.Parent = sidebar
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 9)
-    corner.Parent = btn
-    
-    local page = Instance.new("ScrollingFrame")
-    page.Name = name
-    page.Size = UDim2.fromScale(0.94, 0.92)
-    page.Position = UDim2.fromScale(0.03, 0.04)
-    page.BackgroundTransparency = 1
-    page.ScrollBarThickness = 3
-    page.ScrollBarImageColor3 = COLORS.Purple
-    page.Visible = false
-    page.ZIndex = 115
-    page.Parent = content
-    
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 10)
-    layout.Parent = page
-    
-    return btn, page
-end
-
-local function section(parent, text)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 35)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = COLORS.Purple
-    label.TextSize = 15
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 120
-    label.Parent = parent
-    return label
-end
-
-local function toggle(parent, text, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 45)
-    frame.BackgroundColor3 = Color3.fromRGB(22, 22, 33)
-    frame.BorderSizePixel = 0
-    frame.ZIndex = 120
-    frame.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 9)
-    corner.Parent = frame
-    
-    local label = Instance.new("TextLabel")
-    label.Position = UDim2.fromScale(0.04, 0)
-    label.Size = UDim2.fromScale(0.7, 1)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = COLORS.White
-    label.TextSize = 14
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 125
-    label.Parent = frame
-    
-    local switch = Instance.new("TextButton")
-    switch.AnchorPoint = Vector2.new(1, 0.5)
-    switch.Position = UDim2.fromScale(0.96, 0.5)
-    switch.Size = UDim2.fromOffset(48, 24)
-    switch.BackgroundColor3 = default and COLORS.Purple or Color3.fromRGB(55, 55, 70)
-    switch.Text = ""
-    switch.AutoButtonColor = false
-    switch.ZIndex = 125
-    switch.Parent = frame
-    
-    local switchCorner = Instance.new("UICorner")
-    switchCorner.CornerRadius = UDim.new(1, 0)
-    switchCorner.Parent = switch
-    
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.fromOffset(18, 18)
-    knob.Position = default and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
-    knob.BackgroundColor3 = COLORS.White
-    knob.BorderSizePixel = 0
-    knob.ZIndex = 126
-    knob.Parent = switch
-    
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(1, 0)
-    knobCorner.Parent = knob
-    
-    local state = default
-    
-    switch.MouseButton1Click:Connect(function()
-        state = not state
-        callback(state)
-        tween(switch, 0.2, {BackgroundColor3 = state and COLORS.Purple or Color3.fromRGB(55, 55, 70)})
-        tween(knob, 0.2, {Position = state and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)})
-    end)
-    
-    return frame
-end
-
-local function slider(parent, text, min, max, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 60)
-    frame.BackgroundColor3 = Color3.fromRGB(22, 22, 33)
-    frame.BorderSizePixel = 0
-    frame.ZIndex = 120
-    frame.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 9)
-    corner.Parent = frame
-    
-    local label = Instance.new("TextLabel")
-    label.Position = UDim2.fromScale(0.04, 0.05)
-    label.Size = UDim2.fromScale(0.9, 0.3)
-    label.BackgroundTransparency = 1
-    label.Text = text .. ": " .. default
-    label.TextColor3 = COLORS.White
-    label.TextSize = 13
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 125
-    label.Parent = frame
-    
-    local track = Instance.new("Frame")
-    track.Position = UDim2.fromScale(0.04, 0.62)
-    track.Size = UDim2.fromScale(0.92, 0.13)
-    track.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
-    track.BorderSizePixel = 0
-    track.ZIndex = 125
-    track.Parent = frame
-    
-    local trackCorner = Instance.new("UICorner")
-    trackCorner.CornerRadius = UDim.new(1, 0)
-    trackCorner.Parent = track
-    
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.fromScale((default - min) / (max - min), 1)
-    fill.BackgroundColor3 = COLORS.Purple
-    fill.BorderSizePixel = 0
-    fill.ZIndex = 126
-    fill.Parent = track
-    
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(1, 0)
-    fillCorner.Parent = fill
-    
-    local dragging = false
-    
-    local function update(input)
-        local pos = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-        local val = math.floor(min + (max - min) * pos)
-        fill.Size = UDim2.fromScale(pos, 1)
-        label.Text = text .. ": " .. val
-        callback(val)
-    end
-    
-    track.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            update(input)
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            update(input)
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-end
-
-local function button(parent, text, callback)
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 42)
-    b.BackgroundColor3 = Color3.fromRGB(27, 27, 40)
-    b.BorderSizePixel = 0
-    b.Text = text
-    b.TextColor3 = COLORS.White
-    b.TextSize = 14
-    b.Font = Enum.Font.GothamBold
-    b.AutoButtonColor = false
-    b.ZIndex = 120
-    b.Parent = parent
-    
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 9)
-    c.Parent = b
-    
-    b.MouseEnter:Connect(function()
-        tween(b, 0.15, {BackgroundColor3 = Color3.fromRGB(55, 25, 75)})
-    end)
-    
-    b.MouseLeave:Connect(function()
-        tween(b, 0.15, {BackgroundColor3 = Color3.fromRGB(27, 27, 40)})
-    end)
-    
-    b.MouseButton1Click:Connect(function()
-        pcall(callback)
-    end)
-    
-    return b
-end
-
---========================================================--
--- TABS SETUP
---========================================================--
-
-local tabs = {"Home", "Visuals", "Movement", "Settings"}
-local tabButtons = {}
-local pages = {}
-local currentTab = "Home"
-
-for _, name in ipairs(tabs) do
-    local btn, page = createTab(name)
-    tabButtons[name] = btn
-    pages[name] = page
-    
-    btn.MouseButton1Click:Connect(function()
-        if currentTab == name then return end
-        pages[currentTab].Visible = false
-        tabButtons[currentTab].BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-        tabButtons[currentTab].TextColor3 = COLORS.Gray
-        
-        currentTab = name
-        pages[currentTab].Visible = true
-        tabButtons[currentTab].BackgroundColor3 = Color3.fromRGB(45, 25, 65)
-        tabButtons[currentTab].TextColor3 = COLORS.White
-    end)
-end
-
-pages.Home.Visible = true
-tabButtons.Home.BackgroundColor3 = Color3.fromRGB(45, 25, 65)
-tabButtons.Home.TextColor3 = COLORS.White
-
---========================================================--
--- HOME TAB
---========================================================--
-
-section(pages.Home, "INFORMAZIONI")
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 14)
+contentCorner.Parent = content
 
 local welcome = Instance.new("TextLabel")
-welcome.Size = UDim2.new(1, 0, 0, 60)
+welcome.Position = UDim2.fromScale(0.06, 0.12)
+welcome.Size = UDim2.fromScale(0.88, 0.17)
 welcome.BackgroundTransparency = 1
-welcome.Text = "BENVENUTO IN NEGRO HUB"
-welcome.TextColor3 = COLORS.White
+welcome.Text = "WELCOME"
+welcome.TextColor3 = White
 welcome.TextScaled = true
 welcome.Font = Enum.Font.GothamBlack
-welcome.ZIndex = 120
-welcome.Parent = pages.Home
+welcome.ZIndex = 115
+welcome.Parent = content
 
-local desc = Instance.new("TextLabel")
-desc.Size = UDim2.new(1, 0, 0, 40)
-desc.BackgroundTransparency = 1
-desc.Text = "Executor: Xeno | Versione: 2.0"
-desc.TextColor3 = COLORS.Gray
-desc.TextSize = 14
-desc.Font = Enum.Font.GothamMedium
-desc.ZIndex = 120
-desc.Parent = pages.Home
+local welcomeGradient = Instance.new("UIGradient")
+welcomeGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Pink),
+    ColorSequenceKeypoint.new(0.5, Purple),
+    ColorSequenceKeypoint.new(1, Cyan)
+})
+welcomeGradient.Parent = welcome
 
-section(pages.Home, "STATO")
-
-local status = Instance.new("TextLabel")
-status.Size = UDim2.new(1, 0, 0, 45)
-status.BackgroundColor3 = Color3.fromRGB(8, 40, 28)
-status.Text = "●  SYSTEM ONLINE"
-status.TextColor3 = COLORS.Green
-status.TextSize = 14
-status.Font = Enum.Font.GothamBold
-status.ZIndex = 120
-status.Parent = pages.Home
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 9)
-corner.Parent = status
-
-button(pages.Home, "Test Notifica", function()
-    notify("Negro Hub funziona correttamente!")
-end)
+local description = Instance.new("TextLabel")
+description.Position = UDim2.fromScale(0.08, 0.34)
+description.Size = UDim2.fromScale(0.84, 0.12)
+description.BackgroundTransparency = 1
+description.Text = "NEGRO HUB IS READY"
+description.TextColor3 = Gray
+description.TextScaled = true
+description.Font = Enum.Font.GothamMedium
+description.ZIndex = 115
+description.Parent = content
 
 --========================================================--
--- VISUALS TAB
+-- ONLINE
 --========================================================--
 
-section(pages.Visuals, "ESP SETTINGS")
+local status = Instance.new("Frame")
+status.AnchorPoint = Vector2.new(0.5, 0)
+status.Position = UDim2.fromScale(0.5, 0.56)
+status.Size = UDim2.fromScale(0.42, 0.13)
+status.BackgroundColor3 = Color3.fromRGB(7, 38, 28)
+status.BorderSizePixel = 0
+status.ZIndex = 115
+status.Parent = content
 
-toggle(pages.Visuals, "ESP Box", false, function(value)
-    STATE.ESP = value
-    if value then
-        for _, player in pairs(Players:GetPlayers()) do
-            createESP(player)
-        end
-        Players.PlayerAdded:Connect(createESP)
-    else
-        ESP_FOLDER:ClearAllChildren()
-    end
-end)
+local statusCorner = Instance.new("UICorner")
+statusCorner.CornerRadius = UDim.new(1, 0)
+statusCorner.Parent = status
 
-toggle(pages.Visuals, "Tracers", false, function(value)
-    STATE.Tracers = value
-end)
+local dot = Instance.new("Frame")
+dot.AnchorPoint = Vector2.new(0, 0.5)
+dot.Position = UDim2.fromScale(0.12, 0.5)
+dot.Size = UDim2.fromScale(0.08, 0.3)
+dot.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+dot.BorderSizePixel = 0
+dot.ZIndex = 120
+dot.Parent = status
 
-toggle(pages.Visuals, "Full Bright", false, function(value)
-    STATE.FullBright = value
-    if value then startFullBright() else stopFullBright() end
-end)
+local dotCorner = Instance.new("UICorner")
+dotCorner.CornerRadius = UDim.new(1, 0)
+dotCorner.Parent = dot
 
---========================================================--
--- MOVEMENT TAB
---========================================================--
-
-section(pages.Movement, "VELOCITA")
-
-slider(pages.Movement, "WalkSpeed", 16, 500, 16, function(value)
-    CONFIG.WalkSpeed = value
-    local hum = getHumanoid()
-    if hum and STATE.SpeedEnabled then
-        hum.WalkSpeed = value
-    end
-end)
-
-toggle(pages.Movement, "Speed Mod", false, function(value)
-    STATE.SpeedEnabled = value
-    local hum = getHumanoid()
-    if hum then
-        hum.WalkSpeed = value and CONFIG.WalkSpeed or 16
-    end
-end)
-
-section(pages.Movement, "MOVIMENTI AVANZATI")
-
-toggle(pages.Movement, "Fly", false, function(value)
-    STATE.Fly = value
-    if value then startFly() else stopFly() end
-end)
-
-slider(pages.Movement, "Fly Speed", 10, 200, 50, function(value)
-    CONFIG.FlySpeed = value
-end)
-
-toggle(pages.Movement, "NoClip", false, function(value)
-    STATE.NoClip = value
-    if value then startNoClip() else stopNoClip() end
-end)
-
-toggle(pages.Movement, "Infinite Jump", false, function(value)
-    STATE.InfiniteJump = value
-    if value then startInfiniteJump() end
-end)
+local online = Instance.new("TextLabel")
+online.Position = UDim2.fromScale(0.25, 0)
+online.Size = UDim2.fromScale(0.65, 1)
+online.BackgroundTransparency = 1
+online.Text = "ONLINE"
+online.TextColor3 = Color3.fromRGB(0, 255, 170)
+online.TextScaled = true
+online.Font = Enum.Font.GothamBold
+online.ZIndex = 120
+online.Parent = status
 
 --========================================================--
--- SETTINGS TAB
+-- CERCHIO RIAPRI
 --========================================================--
 
-section(pages.Settings, "UTILITA")
+local reopen = Instance.new("TextButton")
+reopen.Name = "Reopen"
+reopen.AnchorPoint = Vector2.new(0.5, 0)
+reopen.Position = UDim2.fromScale(0.5, 0.025)
+reopen.Size = UDim2.fromOffset(58, 58)
+reopen.BackgroundColor3 = Color3.fromRGB(9, 9, 17)
+reopen.BorderSizePixel = 0
+reopen.Text = "N"
+reopen.TextColor3 = White
+reopen.TextScaled = true
+reopen.Font = Enum.Font.GothamBlack
+reopen.AutoButtonColor = false
+reopen.Visible = false
+reopen.ZIndex = 300
+reopen.Parent = gui
 
-toggle(pages.Settings, "Anti AFK", false, function(value)
-    STATE.AntiAFK = value
-    if value then startAntiAFK() end
-end)
+local reopenCorner = Instance.new("UICorner")
+reopenCorner.CornerRadius = UDim.new(1, 0)
+reopenCorner.Parent = reopen
 
-button(pages.Settings, "Destroy UI", function()
-    cleanup()
-    gui:Destroy()
-end)
-
-button(pages.Settings, "Rejoin Server", function()
-    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-end)
-
---========================================================--
--- DRAG SYSTEM
---========================================================--
-
-local dragging = false
-local dragStart, startPos
-
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = hub.Position
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        hub.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
+local reopenStroke = Instance.new("UIStroke")
+reopenStroke.Thickness = 2
+reopenStroke.Parent = reopen
 
 --========================================================--
--- CLOSE/MINIMIZE
+-- RGB
 --========================================================--
 
-local minimized = false
-local hidden = false
-
-close.MouseButton1Click:Connect(function()
-    hub.Visible = false
-    hidden = true
-    notify("Premi RightShift per riaprire")
-end)
-
-minimize.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    body.Visible = not minimized
-    minimize.Text = minimized and "+" or "−"
-end)
-
--- Tasto Hide/Show
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == CONFIG.HideKey then
-        hidden = not hidden
-        hub.Visible = not hidden
-    end
-end)
-
---========================================================--
--- ANIMAZIONI & STARTUP
---========================================================--
-
--- Loading animation
 task.spawn(function()
-    for i = 0, 100, 2 do
-        progress.Size = UDim2.fromScale(i/100, 1)
-        task.wait(0.02)
+
+    while gui.Parent do
+
+        local t = os.clock()
+
+        hubStroke.Color =
+            Color3.fromHSV(
+                (t * 0.08) % 1,
+                0.9,
+                1
+            )
+
+        reopenStroke.Color =
+            Color3.fromHSV(
+                (t * 0.15) % 1,
+                0.9,
+                1
+            )
+
+        hubTitleGradient.Offset =
+            Vector2.new(
+                math.sin(t * 0.8) * 0.5,
+                0
+            )
+
+        welcomeGradient.Offset =
+            Vector2.new(
+                math.sin(t * 0.9) * 0.5,
+                0
+            )
+
+        task.wait()
     end
-    
-    task.wait(0.3)
-    intro:Destroy()
+
+end)
+
+--========================================================--
+-- HUB ENTRATA
+--========================================================--
+
+Tween(
+    hub,
+    0.75,
+    {
+        Size = UDim2.fromScale(0.58, 0.62)
+    },
+    Enum.EasingStyle.Back
+)
+
+--========================================================--
+-- CHIUDI
+--========================================================--
+
+local function closeHub()
+
+    local t = Tween(
+        hub,
+        0.45,
+        {
+            Size = UDim2.fromScale(0.01, 0.01)
+        },
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.In
+    )
+
+    t.Completed:Wait()
+
+    -- NASCONDE SOLAMENTE L'HUB
+    hub.Visible = false
+
+    -- NESSUNO SFONDO VIENE CREATO
+    reopen.Visible = true
+    reopen.Size = UDim2.fromOffset(0, 0)
+
+    Tween(
+        reopen,
+        0.45,
+        {
+            Size = UDim2.fromOffset(58, 58)
+        },
+        Enum.EasingStyle.Back
+    )
+end
+
+--========================================================--
+-- RIAPRI
+--========================================================--
+
+local function openHub()
+
+    Tween(
+        reopen,
+        0.25,
+        {
+            Size = UDim2.fromOffset(0, 0)
+        },
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.In
+    )
+
+    task.wait(0.25)
+
+    reopen.Visible = false
     hub.Visible = true
     hub.Size = UDim2.fromScale(0.01, 0.01)
-    tween(hub, 0.5, {Size = UDim2.fromScale(0.62, 0.70)}, Enum.EasingStyle.Back)
-    
-    notify("Negro Hub caricato! Premi RightShift per nascondere")
+
+    Tween(
+        hub,
+        0.65,
+        {
+            Size = UDim2.fromScale(0.58, 0.62)
+        },
+        Enum.EasingStyle.Back
+    )
+end
+
+--========================================================--
+-- HOVER X
+--========================================================--
+
+close.MouseEnter:Connect(function()
+
+    Tween(
+        close,
+        0.15,
+        {
+            BackgroundColor3 = Color3.fromRGB(255, 25, 50),
+            Size = UDim2.fromScale(0.085, 0.65)
+        }
+    )
+
 end)
 
--- RGB Animation
-task.spawn(function()
-    while gui.Parent do
-        local t = tick()
-        hubStroke.Color = Color3.fromHSV((t * 0.5) % 1, 1, 1)
-        titleGradient.Offset = Vector2.new(math.sin(t) * 0.5, 0)
-        task.wait(0.05)
-    end
+close.MouseLeave:Connect(function()
+
+    Tween(
+        close,
+        0.15,
+        {
+            BackgroundColor3 = Red,
+            Size = UDim2.fromScale(0.075, 0.58)
+        }
+    )
+
 end)
 
--- Character respawn handler
-LocalPlayer.CharacterAdded:Connect(function(char)
-    if STATE.SpeedEnabled then
-        local hum = char:WaitForChild("Humanoid")
-        hum.WalkSpeed = CONFIG.WalkSpeed
-    end
-end)
+--========================================================--
+-- CLICK
+--========================================================--
 
-print("================================")
-print("    NEGRO HUB v2.0 LOADED")
-print("    Xeno Compatible")
-print("================================")
+close.MouseButton1Click:Connect(closeHub)
+reopen.MouseButton1Click:Connect(openHub)
+
+print("NEGRO HUB: LOADED SUCCESSFULLY")
