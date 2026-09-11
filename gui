@@ -1,29 +1,28 @@
 --[[ 
-    Negro Hub Intro 
+    Negro Hub Premium Intro 
+    Effetti: RGB Gradient, Zoom Animation, CoreGui Stability
     Ottimizzato per Xeno Executor
 ]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui") -- Usiamo CoreGui per evitare che l'intro sparisca quando muori
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
--- Rimuoviamo eventuali intro precedenti per evitare sovrapposizioni
+-- Pulizia intro precedenti
 if CoreGui:FindFirstChild("NegroHubIntro") then
     CoreGui.NegroHubIntro:Destroy()
 end
 
--- GUI principale (Parentata a CoreGui per massima stabilità)
+-- GUI principale
 local gui = Instance.new("ScreenGui")
 gui.Name = "NegroHubIntro"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
-gui.DisplayOrder = 999 -- La mette sopra ogni altra cosa
+gui.DisplayOrder = 999
 gui.Parent = CoreGui
 
--- Sfondo nero
+-- Sfondo nero profondo
 local background = Instance.new("Frame")
 background.Size = UDim2.fromScale(1, 1)
 background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -31,55 +30,86 @@ background.BorderSizePixel = 0
 background.ZIndex = 1
 background.Parent = gui
 
--- Testo presentazione
-local intro = Instance.new("TextLabel")
-intro.Size = UDim2.fromScale(1, 0.2)
-intro.Position = UDim2.fromScale(0, 0.4)
-intro.BackgroundTransparency = 1
-intro.Text = "Negro di Fiducia presenta"
-intro.TextColor3 = Color3.fromRGB(255, 255, 255)
-intro.TextScaled = true
-intro.Font = Enum.Font.GothamBold
-intro.TextTransparency = 1
-intro.ZIndex = 2
-intro.Parent = background
+-- Funzione per creare testo con gradiente animato
+local function createStyledText(text, size, pos, font)
+    local label = Instance.new("TextLabel")
+    label.Size = size
+    label.Position = pos
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextScaled = true
+    label.Font = font
+    label.TextTransparency = 1
+    label.ZIndex = 2
+    label.Parent = background
 
--- Esecuzione Animazioni
-local function playTween(obj, info, goal)
-    local tween = TweenService:Create(obj, info, goal)
-    tween:Play()
-    return tween
+    -- Aggiungiamo un UIGradient per i colori
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170, 0, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))
+    }
+    gradient.Parent = label
+
+    return label, gradient
 end
 
--- Sequenza 1: Fade in presentazione
-playTween(intro, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
-task.wait(2.5)
+-- Funzione per l'animazione RGB continua
+local function startRGB(gradient)
+    task.spawn(function()
+        while gradient.Parent do
+            for i = 0, 1, 0.01 do
+                gradient.Offset = Vector2.new(i, 0)
+                task.wait(0.03)
+            end
+        end
+    end)
+end
 
--- Sequenza 2: Fade out presentazione
-local fOut = playTween(intro, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
-fOut.Completed:Wait()
+-- Funzione per l'effetto Zoom (Rende il testo "vivo")
+local function zoomEffect(obj)
+    obj.Size = UDim2.fromScale(0.8, 0.15) -- Parte leggermente più piccolo
+    TweenService:Create(obj, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.fromScale(1, 0.2)
+    }):Play()
+end
 
--- Sequenza 3: Hub Titolo
-local hub = Instance.new("TextLabel")
-hub.Size = UDim2.fromScale(1, 0.25)
-hub.Position = UDim2.fromScale(0, 0.375)
-hub.BackgroundTransparency = 1
-hub.Text = "Negro Hub"
-hub.TextColor3 = Color3.fromRGB(255, 255, 255)
-hub.TextScaled = true
-hub.Font = Enum.Font.GothamBlack
-hub.TextTransparency = 1
-hub.ZIndex = 2
-hub.Parent = background
+-- --- SEQUENZA DI AVVIO ---
 
-playTween(hub, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
+-- 1. Presentazione
+local introText, introGrad = createStyledText("Negro di Fiducia presenta", UDim2.fromScale(1, 0.2), UDim2.fromScale(0, 0.4), Enum.Font.GothamBold)
+startRGB(introGrad)
+
+-- Fade In + Zoom
+TweenService:Create(introText, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+zoomEffect(introText)
 task.wait(3)
 
--- Sequenza finale: Scomparsa totale
-local hubOut = playTween(hub, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
-local bgOut = playTween(background, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+-- Fade Out
+local fOut = TweenService:Create(introText, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
+fOut:Play()
+fOut.Completed:Wait()
+introText:Destroy()
+
+-- 2. Hub Principale (L'effetto WOW)
+local hubText, hubGrad = createStyledText("NEGRO HUB", UDim2.fromScale(1, 0.3), UDim2.fromScale(0, 0.35), Enum.Font.GothamBlack)
+startRGB(hubGrad)
+
+-- Fade In + Zoom più aggressivo
+TweenService:Create(hubText, TweenInfo.new(1.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+zoomEffect(hubText)
+task.wait(3.5)
+
+-- Scomparsa finale epica
+local hubOut = TweenService:Create(hubText, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1, Size = UDim2.fromScale(1.2, 0.4)})
+local bgOut = TweenService:Create(background, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+
+hubOut:Play()
+bgOut:Play()
 
 hubOut.Completed:Wait()
 gui:Destroy()
 
-print("Negro Hub caricato con successo!")
+print("✨ Negro Hub Premium caricato con successo!")
