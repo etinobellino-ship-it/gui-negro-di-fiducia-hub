@@ -1,64 +1,71 @@
+--[[
+    NEGRO HUB — Ultimate UI
+    Intro + Loading + Modern Hub
+    Xeno/CoreGui compatible UI structure
+]]
+
 --========================================================--
---                 NEGRO HUB - FINAL FIX                  --
+-- SERVICES
 --========================================================--
 
-local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
 
 --========================================================--
--- CLEANUP COMPLETO
+-- CLEAN OLD GUI
 --========================================================--
 
 pcall(function()
-    for _, v in ipairs(CoreGui:GetChildren()) do
-        if v.Name == "NegroHubUltra"
-        or v.Name == "NegroHubIntro"
-        or v.Name == "NegroHub"
-        then
-            v:Destroy()
-        end
+    local old = CoreGui:FindFirstChild("NegroHubUltimate")
+    if old then
+        old:Destroy()
     end
 end)
 
 --========================================================--
--- COLORI
+-- COLORS
 --========================================================--
 
-local Pink = Color3.fromRGB(255, 0, 130)
-local Purple = Color3.fromRGB(145, 0, 255)
-local Blue = Color3.fromRGB(0, 190, 255)
-local Cyan = Color3.fromRGB(0, 255, 220)
-local Red = Color3.fromRGB(255, 45, 60)
+local COLORS = {
+    Pink = Color3.fromRGB(255, 0, 130),
+    Purple = Color3.fromRGB(145, 0, 255),
+    Blue = Color3.fromRGB(0, 180, 255),
+    Cyan = Color3.fromRGB(0, 255, 220),
 
-local White = Color3.fromRGB(245, 245, 255)
-local Gray = Color3.fromRGB(135, 135, 155)
+    Background = Color3.fromRGB(3, 3, 8),
+    Panel = Color3.fromRGB(12, 12, 20),
+    Panel2 = Color3.fromRGB(20, 20, 31),
 
---========================================================--
--- TWEEN
---========================================================--
+    White = Color3.fromRGB(245, 245, 255),
+    Gray = Color3.fromRGB(145, 145, 165),
 
-local function Tween(obj, time, props, style, direction)
+    Red = Color3.fromRGB(255, 45, 60),
+    Green = Color3.fromRGB(0, 220, 130)
+}
 
+local function tween(object, duration, properties, style, direction)
     local info = TweenInfo.new(
-        time,
+        duration,
         style or Enum.EasingStyle.Quint,
         direction or Enum.EasingDirection.Out
     )
 
-    local t = TweenService:Create(obj, info, props)
+    local t = TweenService:Create(object, info, properties)
     t:Play()
 
     return t
 end
 
 --========================================================--
--- SCREEN GUI
--- IMPORTANTE:
--- QUESTA GUI NON HA NESSUNO SFONDO
+-- ROOT GUI
 --========================================================--
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "NegroHubUltra"
+gui.Name = "NegroHubUltimate"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 999999
@@ -72,31 +79,29 @@ gui.Parent = CoreGui
 local intro = Instance.new("Frame")
 intro.Name = "Intro"
 intro.Size = UDim2.fromScale(1, 1)
-intro.Position = UDim2.fromScale(0, 0)
-intro.BackgroundColor3 = Color3.fromRGB(2, 2, 7)
+intro.BackgroundColor3 = COLORS.Background
 intro.BorderSizePixel = 0
 intro.ZIndex = 1
 intro.Parent = gui
 
--- Gradient
 local introGradient = Instance.new("UIGradient")
 introGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(2, 2, 8)),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 3, 28)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(2, 7, 18))
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(2, 8, 20))
 })
 introGradient.Rotation = 35
 introGradient.Parent = intro
 
 --========================================================--
--- GLOW
+-- INTRO GLOW
 --========================================================--
 
 local glow = Instance.new("Frame")
 glow.AnchorPoint = Vector2.new(0.5, 0.5)
 glow.Position = UDim2.fromScale(0.5, 0.48)
 glow.Size = UDim2.fromScale(0.7, 0.4)
-glow.BackgroundColor3 = Purple
+glow.BackgroundColor3 = COLORS.Purple
 glow.BackgroundTransparency = 0.94
 glow.BorderSizePixel = 0
 glow.ZIndex = 2
@@ -107,56 +112,50 @@ glowCorner.CornerRadius = UDim.new(1, 0)
 glowCorner.Parent = glow
 
 --========================================================--
--- PARTICELLE
+-- PARTICLES
 --========================================================--
 
 local particles = Instance.new("Folder")
-particles.Name = "Particles"
 particles.Parent = intro
 
 for i = 1, 45 do
 
-    local p = Instance.new("Frame")
+    local particle = Instance.new("Frame")
 
-    local s = math.random(1, 4)
+    local size = math.random(1, 4)
 
-    p.Size = UDim2.fromOffset(s, s)
-    p.Position = UDim2.fromScale(
+    particle.Size = UDim2.fromOffset(size, size)
+    particle.Position = UDim2.fromScale(
         math.random(),
         math.random()
     )
 
-    p.BackgroundColor3 = Color3.fromHSV(
-        math.random(),
-        0.8,
-        1
-    )
+    particle.BackgroundColor3 =
+        Color3.fromHSV(math.random(), 0.85, 1)
 
-    p.BackgroundTransparency =
-        math.random(40, 90) / 100
+    particle.BackgroundTransparency =
+        math.random(45, 90) / 100
 
-    p.BorderSizePixel = 0
-    p.ZIndex = 3
-    p.Parent = particles
+    particle.BorderSizePixel = 0
+    particle.ZIndex = 3
+    particle.Parent = particles
 
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(1, 0)
-    c.Parent = p
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = particle
 
     task.spawn(function()
 
-        while p.Parent do
+        while particle.Parent do
 
-            local destination = UDim2.fromScale(
-                math.random(),
-                math.random()
-            )
-
-            Tween(
-                p,
+            tween(
+                particle,
                 math.random(3, 7),
                 {
-                    Position = destination
+                    Position = UDim2.fromScale(
+                        math.random(),
+                        math.random()
+                    )
                 },
                 Enum.EasingStyle.Sine,
                 Enum.EasingDirection.InOut
@@ -175,17 +174,17 @@ end
 local introContainer = Instance.new("Frame")
 introContainer.AnchorPoint = Vector2.new(0.5, 0.5)
 introContainer.Position = UDim2.fromScale(0.5, 0.5)
-introContainer.Size = UDim2.fromScale(0.8, 0.4)
+introContainer.Size = UDim2.fromScale(0.8, 0.42)
 introContainer.BackgroundTransparency = 1
 introContainer.ZIndex = 10
 introContainer.Parent = intro
 
 local introScale = Instance.new("UIScale")
-introScale.Scale = 0.8
+introScale.Scale = 0.75
 introScale.Parent = introContainer
 
 --========================================================--
--- PRESENTAZIONE
+-- PRESENTATION
 --========================================================--
 
 local presentation = Instance.new("TextLabel")
@@ -194,72 +193,68 @@ presentation.Position = UDim2.fromScale(0.5, 0.2)
 presentation.Size = UDim2.fromScale(0.95, 0.2)
 presentation.BackgroundTransparency = 1
 presentation.Text = "Negro di Fiducia presenta"
-presentation.TextColor3 = White
+presentation.TextColor3 = COLORS.White
 presentation.TextScaled = true
-presentation.Font = Enum.Font.GothamBold
+presentation.Font = Enum.Font.GothamBlack
 presentation.TextTransparency = 1
 presentation.ZIndex = 20
 presentation.Parent = introContainer
 
 local presentationGradient = Instance.new("UIGradient")
 presentationGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Pink),
-    ColorSequenceKeypoint.new(0.5, Purple),
-    ColorSequenceKeypoint.new(1, Cyan)
+    ColorSequenceKeypoint.new(0, COLORS.Pink),
+    ColorSequenceKeypoint.new(0.5, COLORS.Purple),
+    ColorSequenceKeypoint.new(1, COLORS.Cyan)
 })
 presentationGradient.Parent = presentation
 
 --========================================================--
--- LOADING TEXT
+-- LOADING LABEL
 --========================================================--
 
-local loading = Instance.new("TextLabel")
-loading.AnchorPoint = Vector2.new(0.5, 0)
-loading.Position = UDim2.fromScale(0.5, 0.46)
-loading.Size = UDim2.fromScale(0.9, 0.08)
-loading.BackgroundTransparency = 1
-loading.Text = "LOADING SCRIPT FOR THIS GAME"
-loading.TextColor3 = Gray
-loading.TextScaled = true
-loading.Font = Enum.Font.GothamMedium
-loading.TextTransparency = 1
-loading.ZIndex = 20
-loading.Parent = introContainer
+local loadingText = Instance.new("TextLabel")
+loadingText.AnchorPoint = Vector2.new(0.5, 0)
+loadingText.Position = UDim2.fromScale(0.5, 0.46)
+loadingText.Size = UDim2.fromScale(0.9, 0.08)
+loadingText.BackgroundTransparency = 1
+loadingText.Text = "LOADING SCRIPT FOR THIS GAME"
+loadingText.TextColor3 = COLORS.Gray
+loadingText.TextScaled = true
+loadingText.Font = Enum.Font.GothamMedium
+loadingText.TextTransparency = 1
+loadingText.ZIndex = 20
+loadingText.Parent = introContainer
 
 --========================================================--
--- BAR ESTERNA
+-- PROGRESS BAR
 --========================================================--
 
-local barBackground = Instance.new("Frame")
-barBackground.AnchorPoint = Vector2.new(0.5, 0)
-barBackground.Position = UDim2.fromScale(0.5, 0.59)
-barBackground.Size = UDim2.fromScale(0.65, 0.045)
-barBackground.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
-barBackground.BorderSizePixel = 0
-barBackground.BackgroundTransparency = 1
-barBackground.ZIndex = 20
-barBackground.Parent = introContainer
+local bar = Instance.new("Frame")
+bar.AnchorPoint = Vector2.new(0.5, 0)
+bar.Position = UDim2.fromScale(0.5, 0.59)
+bar.Size = UDim2.fromScale(0.65, 0.045)
+bar.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+bar.BackgroundTransparency = 1
+bar.BorderSizePixel = 0
+bar.ZIndex = 20
+bar.Parent = introContainer
 
 local barCorner = Instance.new("UICorner")
 barCorner.CornerRadius = UDim.new(1, 0)
-barCorner.Parent = barBackground
+barCorner.Parent = bar
 
 local barStroke = Instance.new("UIStroke")
 barStroke.Thickness = 1
-barStroke.Color = Purple
-barStroke.Transparency = 0.25
-barStroke.Parent = barBackground
-
---========================================================--
--- PROGRESS
---========================================================--
+barStroke.Color = COLORS.Purple
+barStroke.Transparency = 0.2
+barStroke.Parent = bar
 
 local progress = Instance.new("Frame")
 progress.Size = UDim2.fromScale(0, 1)
-progress.BackgroundColor3 = Purple
+progress.BackgroundColor3 = COLORS.Purple
 progress.BorderSizePixel = 0
 progress.ZIndex = 21
-progress.Parent = barBackground
+progress.Parent = bar
 
 local progressCorner = Instance.new("UICorner")
 progressCorner.CornerRadius = UDim.new(1, 0)
@@ -267,128 +262,114 @@ progressCorner.Parent = progress
 
 local progressGradient = Instance.new("UIGradient")
 progressGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Pink),
-    ColorSequenceKeypoint.new(0.5, Purple),
-    ColorSequenceKeypoint.new(1, Cyan)
+    ColorSequenceKeypoint.new(0, COLORS.Pink),
+    ColorSequenceKeypoint.new(0.5, COLORS.Purple),
+    ColorSequenceKeypoint.new(1, COLORS.Cyan)
 })
 progressGradient.Parent = progress
 
 --========================================================--
--- PERCENTUALE
+-- PERCENTAGE
 --========================================================--
 
-local percent = Instance.new("TextLabel")
-percent.AnchorPoint = Vector2.new(0.5, 0)
-percent.Position = UDim2.fromScale(0.5, 0.67)
-percent.Size = UDim2.fromScale(0.25, 0.08)
-percent.BackgroundTransparency = 1
-percent.Text = "0%"
-percent.TextColor3 = White
-percent.TextScaled = true
-percent.Font = Enum.Font.GothamBold
-percent.TextTransparency = 1
-percent.ZIndex = 20
-percent.Parent = introContainer
+local percentage = Instance.new("TextLabel")
+percentage.AnchorPoint = Vector2.new(0.5, 0)
+percentage.Position = UDim2.fromScale(0.5, 0.67)
+percentage.Size = UDim2.fromScale(0.25, 0.08)
+percentage.BackgroundTransparency = 1
+percentage.Text = "0%"
+percentage.TextColor3 = COLORS.White
+percentage.TextScaled = true
+percentage.Font = Enum.Font.GothamBold
+percentage.TextTransparency = 1
+percentage.ZIndex = 20
+percentage.Parent = introContainer
 
 --========================================================--
--- RGB INTRO
+-- RGB ANIMATION
 --========================================================--
 
 task.spawn(function()
 
     while intro.Parent do
 
-        local t = os.clock()
+        local time = os.clock()
 
         presentationGradient.Offset =
-            Vector2.new(math.sin(t * 0.8) * 0.5, 0)
+            Vector2.new(math.sin(time * 0.8) * 0.5, 0)
 
         progressGradient.Offset =
-            Vector2.new(math.sin(t * 1.2) * 0.5, 0)
+            Vector2.new(math.sin(time * 1.2) * 0.5, 0)
 
         glow.BackgroundColor3 =
             Color3.fromHSV(
-                (t * 0.08) % 1,
+                (time * 0.08) % 1,
                 0.9,
                 1
             )
 
         task.wait()
     end
-
 end)
 
 --========================================================--
--- INTRO ENTRATA
+-- INTRO START
 --========================================================--
 
-Tween(
-    introScale,
-    1,
-    {Scale = 1}
-)
+tween(introScale, 1, {
+    Scale = 1
+})
 
-Tween(
-    presentation,
-    0.8,
-    {TextTransparency = 0}
-)
+tween(presentation, 0.8, {
+    TextTransparency = 0
+})
 
-Tween(
-    loading,
-    0.8,
-    {TextTransparency = 0}
-)
+tween(loadingText, 0.8, {
+    TextTransparency = 0
+})
 
-Tween(
-    barBackground,
-    0.8,
-    {BackgroundTransparency = 0.1}
-)
+tween(bar, 0.8, {
+    BackgroundTransparency = 0.1
+})
 
-Tween(
-    percent,
-    0.8,
-    {TextTransparency = 0}
-)
+tween(percentage, 0.8, {
+    TextTransparency = 0
+})
 
 task.wait(0.5)
 
 --========================================================--
--- CARICAMENTO
+-- LOADING 0-100
 --========================================================--
 
 for i = 0, 100 do
 
-    percent.Text = i .. "%"
+    percentage.Text = i .. "%"
 
-    Tween(
+    tween(
         progress,
-        0.045,
+        0.035,
         {
             Size = UDim2.fromScale(i / 100, 1)
         },
         Enum.EasingStyle.Linear
     )
 
-    task.wait(0.03)
+    task.wait(0.025)
 end
 
-percent.Text = "100%"
+percentage.Text = "100%"
 
-task.wait(0.5)
+task.wait(0.6)
 
 --========================================================--
--- IMPORTANTISSIMO:
--- DISTRUGGI COMPLETAMENTE L'INTRO
+-- DESTROY INTRO COMPLETELY
 --========================================================--
 
 intro:Destroy()
 
 --========================================================--
 -- HUB
---
--- QUESTA PARTE NON HA ALCUN FRAME FULL SCREEN NERO
 --========================================================--
 
 local hub = Instance.new("Frame")
@@ -396,8 +377,7 @@ hub.Name = "Hub"
 hub.AnchorPoint = Vector2.new(0.5, 0.5)
 hub.Position = UDim2.fromScale(0.5, 0.5)
 hub.Size = UDim2.fromScale(0.01, 0.01)
-hub.BackgroundColor3 = Color3.fromRGB(10, 10, 18)
-hub.BackgroundTransparency = 0.05
+hub.BackgroundColor3 = COLORS.Panel
 hub.BorderSizePixel = 0
 hub.ZIndex = 100
 hub.Parent = gui
@@ -408,12 +388,11 @@ hubCorner.Parent = hub
 
 local hubStroke = Instance.new("UIStroke")
 hubStroke.Thickness = 2
-hubStroke.Transparency = 0.1
 hubStroke.Parent = hub
 
 local hubGradient = Instance.new("UIGradient")
 hubGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 8, 38)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 7, 38)),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8, 12, 25)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(22, 5, 27))
 })
@@ -421,14 +400,68 @@ hubGradient.Rotation = 45
 hubGradient.Parent = hub
 
 --========================================================--
+-- DRAG SYSTEM
+--========================================================--
+
+local dragging = false
+local dragStart
+local startPosition
+
+local function makeDraggable(object)
+
+    object.InputBegan:Connect(function(input)
+
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+
+            dragging = true
+            dragStart = input.Position
+            startPosition = hub.Position
+
+            input.Changed:Connect(function()
+
+                if input.UserInputState ==
+                    Enum.UserInputState.End then
+
+                    dragging = false
+                end
+
+            end)
+        end
+
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+
+        if not dragging then
+            return
+        end
+
+        if input.UserInputType ==
+            Enum.UserInputType.MouseMovement
+        or input.UserInputType ==
+            Enum.UserInputType.Touch then
+
+            local delta = input.Position - dragStart
+
+            hub.Position = UDim2.new(
+                startPosition.X.Scale,
+                startPosition.X.Offset + delta.X,
+                startPosition.Y.Scale,
+                startPosition.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+--========================================================--
 -- HEADER
 --========================================================--
 
 local header = Instance.new("Frame")
-header.Position = UDim2.fromScale(0.035, 0.035)
-header.Size = UDim2.fromScale(0.93, 0.18)
-header.BackgroundColor3 = Color3.fromRGB(17, 17, 28)
-header.BackgroundTransparency = 0.1
+header.Position = UDim2.fromScale(0.025, 0.025)
+header.Size = UDim2.fromScale(0.95, 0.16)
+header.BackgroundColor3 = COLORS.Panel2
 header.BorderSizePixel = 0
 header.ZIndex = 110
 header.Parent = hub
@@ -437,36 +470,38 @@ local headerCorner = Instance.new("UICorner")
 headerCorner.CornerRadius = UDim.new(0, 14)
 headerCorner.Parent = header
 
+makeDraggable(header)
+
 --========================================================--
--- HUB TITLE
+-- TITLE
 --========================================================--
 
-local hubTitle = Instance.new("TextLabel")
-hubTitle.Position = UDim2.fromScale(0.05, 0.1)
-hubTitle.Size = UDim2.fromScale(0.68, 0.5)
-hubTitle.BackgroundTransparency = 1
-hubTitle.Text = "NEGRO HUB"
-hubTitle.TextColor3 = White
-hubTitle.TextScaled = true
-hubTitle.Font = Enum.Font.GothamBlack
-hubTitle.TextXAlignment = Enum.TextXAlignment.Left
-hubTitle.ZIndex = 115
-hubTitle.Parent = header
+local title = Instance.new("TextLabel")
+title.Position = UDim2.fromScale(0.04, 0.12)
+title.Size = UDim2.fromScale(0.65, 0.5)
+title.BackgroundTransparency = 1
+title.Text = "NEGRO HUB"
+title.TextColor3 = COLORS.White
+title.TextScaled = true
+title.Font = Enum.Font.GothamBlack
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.ZIndex = 115
+title.Parent = header
 
-local hubTitleGradient = Instance.new("UIGradient")
-hubTitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Pink),
-    ColorSequenceKeypoint.new(0.5, Purple),
-    ColorSequenceKeypoint.new(1, Blue)
+local titleGradient = Instance.new("UIGradient")
+titleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, COLORS.Pink),
+    ColorSequenceKeypoint.new(0.5, COLORS.Purple),
+    ColorSequenceKeypoint.new(1, COLORS.Blue)
 })
-hubTitleGradient.Parent = hubTitle
+titleGradient.Parent = title
 
 local subtitle = Instance.new("TextLabel")
-subtitle.Position = UDim2.fromScale(0.052, 0.61)
+subtitle.Position = UDim2.fromScale(0.042, 0.6)
 subtitle.Size = UDim2.fromScale(0.6, 0.25)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "Premium Script Hub"
-subtitle.TextColor3 = Gray
+subtitle.Text = "ULTIMATE PREMIUM HUB"
+subtitle.TextColor3 = COLORS.Gray
 subtitle.TextScaled = true
 subtitle.Font = Enum.Font.GothamMedium
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -474,19 +509,19 @@ subtitle.ZIndex = 115
 subtitle.Parent = header
 
 --========================================================--
--- X ROSSA
+-- CLOSE BUTTON
 --========================================================--
 
 local close = Instance.new("TextButton")
 close.AnchorPoint = Vector2.new(1, 0.5)
 close.Position = UDim2.fromScale(0.97, 0.5)
-close.Size = UDim2.fromScale(0.075, 0.58)
-close.BackgroundColor3 = Red
+close.Size = UDim2.fromScale(0.07, 0.62)
+close.BackgroundColor3 = COLORS.Red
 close.BorderSizePixel = 0
 close.Text = "×"
-close.TextColor3 = White
+close.TextColor3 = COLORS.White
 close.TextScaled = true
-close.Font = Enum.Font.GothamBold
+close.Font = Enum.Font.GothamBlack
 close.AutoButtonColor = false
 close.ZIndex = 120
 close.Parent = header
@@ -495,129 +530,665 @@ local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 10)
 closeCorner.Parent = close
 
-local closeStroke = Instance.new("UIStroke")
-closeStroke.Color = Color3.fromRGB(255, 120, 130)
-closeStroke.Thickness = 1
-closeStroke.Parent = close
+--========================================================--
+-- MINIMIZE
+--========================================================--
+
+local minimize = Instance.new("TextButton")
+minimize.AnchorPoint = Vector2.new(1, 0.5)
+minimize.Position = UDim2.fromScale(0.885, 0.5)
+minimize.Size = UDim2.fromScale(0.07, 0.62)
+minimize.BackgroundColor3 = Color3.fromRGB(55, 55, 70)
+minimize.BorderSizePixel = 0
+minimize.Text = "−"
+minimize.TextColor3 = COLORS.White
+minimize.TextScaled = true
+minimize.Font = Enum.Font.GothamBlack
+minimize.AutoButtonColor = false
+minimize.ZIndex = 120
+minimize.Parent = header
+
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 10)
+minCorner.Parent = minimize
+
+--========================================================--
+-- BODY
+--========================================================--
+
+local body = Instance.new("Frame")
+body.Position = UDim2.fromScale(0.025, 0.205)
+body.Size = UDim2.fromScale(0.95, 0.77)
+body.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
+body.BorderSizePixel = 0
+body.ZIndex = 105
+body.Parent = hub
+
+local bodyCorner = Instance.new("UICorner")
+bodyCorner.CornerRadius = UDim.new(0, 15)
+bodyCorner.Parent = body
+
+--========================================================--
+-- SIDEBAR
+--========================================================--
+
+local sidebar = Instance.new("Frame")
+sidebar.Position = UDim2.fromScale(0.02, 0.03)
+sidebar.Size = UDim2.fromScale(0.22, 0.94)
+sidebar.BackgroundColor3 = Color3.fromRGB(13, 13, 22)
+sidebar.BorderSizePixel = 0
+sidebar.ZIndex = 110
+sidebar.Parent = body
+
+local sidebarCorner = Instance.new("UICorner")
+sidebarCorner.CornerRadius = UDim.new(0, 12)
+sidebarCorner.Parent = sidebar
+
+local tabList = Instance.new("UIListLayout")
+tabList.Padding = UDim.new(0, 7)
+tabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+tabList.Parent = sidebar
 
 --========================================================--
 -- CONTENT
 --========================================================--
 
 local content = Instance.new("Frame")
-content.Position = UDim2.fromScale(0.035, 0.245)
-content.Size = UDim2.fromScale(0.93, 0.71)
-content.BackgroundColor3 = Color3.fromRGB(5, 5, 11)
-content.BackgroundTransparency = 0.08
+content.Position = UDim2.fromScale(0.26, 0.03)
+content.Size = UDim2.fromScale(0.72, 0.94)
+content.BackgroundColor3 = Color3.fromRGB(10, 10, 17)
 content.BorderSizePixel = 0
 content.ZIndex = 110
-content.Parent = hub
+content.Parent = body
 
 local contentCorner = Instance.new("UICorner")
-contentCorner.CornerRadius = UDim.new(0, 14)
+contentCorner.CornerRadius = UDim.new(0, 12)
 contentCorner.Parent = content
 
+--========================================================--
+-- TABS
+--========================================================--
+
+local tabs = {
+    "Home",
+    "Visuals",
+    "Movement",
+    "Settings",
+    "About"
+}
+
+local tabButtons = {}
+local pages = {}
+local currentTab = "Home"
+
+--========================================================--
+-- HELPERS
+--========================================================--
+
+local function createPage(name)
+
+    local page = Instance.new("ScrollingFrame")
+    page.Name = name
+    page.Size = UDim2.fromScale(0.94, 0.92)
+    page.Position = UDim2.fromScale(0.03, 0.04)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 3
+    page.ScrollBarImageColor3 = COLORS.Purple
+    page.Visible = name == currentTab
+    page.ZIndex = 115
+    page.Parent = content
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 10)
+    layout.Parent = page
+
+    pages[name] = page
+
+    return page
+end
+
+for _, name in ipairs(tabs) do
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.fromScale(0.88, 0.12)
+    button.BackgroundColor3 =
+        name == currentTab
+        and Color3.fromRGB(45, 25, 65)
+        or Color3.fromRGB(22, 22, 32)
+
+    button.BorderSizePixel = 0
+    button.Text = name
+    button.TextColor3 =
+        name == currentTab
+        and COLORS.White
+        or COLORS.Gray
+
+    button.TextScaled = true
+    button.Font = Enum.Font.GothamBold
+    button.AutoButtonColor = false
+    button.ZIndex = 120
+    button.Parent = sidebar
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 9)
+    corner.Parent = button
+
+    tabButtons[name] = button
+
+    createPage(name)
+
+    button.MouseEnter:Connect(function()
+
+        if currentTab ~= name then
+
+            tween(button, 0.15, {
+                BackgroundColor3 =
+                    Color3.fromRGB(32, 25, 45)
+            })
+
+        end
+    end)
+
+    button.MouseLeave:Connect(function()
+
+        if currentTab ~= name then
+
+            tween(button, 0.15, {
+                BackgroundColor3 =
+                    Color3.fromRGB(22, 22, 32)
+            })
+
+        end
+    end)
+
+    button.MouseButton1Click:Connect(function()
+
+        if currentTab == name then
+            return
+        end
+
+        pages[currentTab].Visible = false
+
+        tabButtons[currentTab].BackgroundColor3 =
+            Color3.fromRGB(22, 22, 32)
+
+        tabButtons[currentTab].TextColor3 =
+            COLORS.Gray
+
+        currentTab = name
+
+        pages[currentTab].Visible = true
+
+        tabButtons[currentTab].BackgroundColor3 =
+            Color3.fromRGB(45, 25, 65)
+
+        tabButtons[currentTab].TextColor3 =
+            COLORS.White
+    end)
+end
+
+--========================================================--
+-- UI HELPERS
+--========================================================--
+
+local function section(parent, text)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 35)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = COLORS.Purple
+    label.TextSize = 15
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 120
+    label.Parent = parent
+
+    return label
+end
+
+local function button(parent, text, callback)
+
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, 0, 0, 42)
+    b.BackgroundColor3 = Color3.fromRGB(27, 27, 40)
+    b.BorderSizePixel = 0
+    b.Text = text
+    b.TextColor3 = COLORS.White
+    b.TextSize = 14
+    b.Font = Enum.Font.GothamBold
+    b.AutoButtonColor = false
+    b.ZIndex = 120
+    b.Parent = parent
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 9)
+    c.Parent = b
+
+    b.MouseEnter:Connect(function()
+
+        tween(b, 0.15, {
+            BackgroundColor3 = Color3.fromRGB(55, 25, 75)
+        })
+
+    end)
+
+    b.MouseLeave:Connect(function()
+
+        tween(b, 0.15, {
+            BackgroundColor3 = Color3.fromRGB(27, 27, 40)
+        })
+
+    end)
+
+    b.MouseButton1Click:Connect(callback)
+
+    return b
+end
+
+local function toggle(parent, text, default, callback)
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 45)
+    frame.BackgroundColor3 = Color3.fromRGB(22, 22, 33)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 120
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 9)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Position = UDim2.fromScale(0.04, 0)
+    label.Size = UDim2.fromScale(0.7, 1)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = COLORS.White
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 125
+    label.Parent = frame
+
+    local switch = Instance.new("TextButton")
+    switch.AnchorPoint = Vector2.new(1, 0.5)
+    switch.Position = UDim2.fromScale(0.96, 0.5)
+    switch.Size = UDim2.fromOffset(48, 24)
+    switch.BackgroundColor3 =
+        default and COLORS.Purple or Color3.fromRGB(55, 55, 70)
+    switch.BorderSizePixel = 0
+    switch.Text = ""
+    switch.AutoButtonColor = false
+    switch.ZIndex = 125
+    switch.Parent = frame
+
+    local switchCorner = Instance.new("UICorner")
+    switchCorner.CornerRadius = UDim.new(1, 0)
+    switchCorner.Parent = switch
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.fromOffset(18, 18)
+    knob.Position =
+        default
+        and UDim2.new(1, -21, 0.5, -9)
+        or UDim2.new(0, 3, 0.5, -9)
+
+    knob.BackgroundColor3 = COLORS.White
+    knob.BorderSizePixel = 0
+    knob.ZIndex = 126
+    knob.Parent = switch
+
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(1, 0)
+    knobCorner.Parent = knob
+
+    local state = default
+
+    switch.MouseButton1Click:Connect(function()
+
+        state = not state
+
+        callback(state)
+
+        tween(
+            switch,
+            0.2,
+            {
+                BackgroundColor3 =
+                    state
+                    and COLORS.Purple
+                    or Color3.fromRGB(55, 55, 70)
+            }
+        )
+
+        tween(
+            knob,
+            0.2,
+            {
+                Position =
+                    state
+                    and UDim2.new(1, -21, 0.5, -9)
+                    or UDim2.new(0, 3, 0.5, -9)
+            }
+        )
+    end)
+
+    return frame
+end
+
+local function slider(parent, text, min, max, default, callback)
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 60)
+    frame.BackgroundColor3 = Color3.fromRGB(22, 22, 33)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 120
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 9)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Position = UDim2.fromScale(0.04, 0.05)
+    label.Size = UDim2.fromScale(0.9, 0.3)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. default
+    label.TextColor3 = COLORS.White
+    label.TextSize = 13
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 125
+    label.Parent = frame
+
+    local track = Instance.new("Frame")
+    track.Position = UDim2.fromScale(0.04, 0.62)
+    track.Size = UDim2.fromScale(0.92, 0.13)
+    track.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+    track.BorderSizePixel = 0
+    track.ZIndex = 125
+    track.Parent = frame
+
+    local trackCorner = Instance.new("UICorner")
+    trackCorner.CornerRadius = UDim.new(1, 0)
+    trackCorner.Parent = track
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.fromScale(
+        (default - min) / (max - min),
+        1
+    )
+    fill.BackgroundColor3 = COLORS.Purple
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 126
+    fill.Parent = track
+
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(1, 0)
+    fillCorner.Parent = fill
+
+    local draggingSlider = false
+
+    local function update(input)
+
+        local position =
+            math.clamp(
+                (input.Position.X - track.AbsolutePosition.X)
+                / track.AbsoluteSize.X,
+                0,
+                1
+            )
+
+        local value =
+            math.floor(min + (max - min) * position)
+
+        fill.Size = UDim2.fromScale(position, 1)
+        label.Text = text .. ": " .. value
+
+        callback(value)
+    end
+
+    track.InputBegan:Connect(function(input)
+
+        if input.UserInputType ==
+            Enum.UserInputType.MouseButton1 then
+
+            draggingSlider = true
+            update(input)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+
+        if draggingSlider
+        and input.UserInputType ==
+            Enum.UserInputType.MouseMovement then
+
+            update(input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+
+        if input.UserInputType ==
+            Enum.UserInputType.MouseButton1 then
+
+            draggingSlider = false
+        end
+    end)
+
+    return frame
+end
+
+--========================================================--
+-- HOME
+--========================================================--
+
+local home = pages.Home
+
+section(home, "NEGRO HUB")
+
 local welcome = Instance.new("TextLabel")
-welcome.Position = UDim2.fromScale(0.06, 0.12)
-welcome.Size = UDim2.fromScale(0.88, 0.17)
+welcome.Size = UDim2.new(1, 0, 0, 80)
 welcome.BackgroundTransparency = 1
-welcome.Text = "WELCOME"
-welcome.TextColor3 = White
+welcome.Text = "WELCOME TO NEGRO HUB"
+welcome.TextColor3 = COLORS.White
 welcome.TextScaled = true
 welcome.Font = Enum.Font.GothamBlack
-welcome.ZIndex = 115
-welcome.Parent = content
+welcome.ZIndex = 120
+welcome.Parent = home
 
 local welcomeGradient = Instance.new("UIGradient")
 welcomeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Pink),
-    ColorSequenceKeypoint.new(0.5, Purple),
-    ColorSequenceKeypoint.new(1, Cyan)
+    ColorSequenceKeypoint.new(0, COLORS.Pink),
+    ColorSequenceKeypoint.new(0.5, COLORS.Purple),
+    ColorSequenceKeypoint.new(1, COLORS.Cyan)
 })
 welcomeGradient.Parent = welcome
 
-local description = Instance.new("TextLabel")
-description.Position = UDim2.fromScale(0.08, 0.34)
-description.Size = UDim2.fromScale(0.84, 0.12)
-description.BackgroundTransparency = 1
-description.Text = "NEGRO HUB IS READY"
-description.TextColor3 = Gray
-description.TextScaled = true
-description.Font = Enum.Font.GothamMedium
-description.ZIndex = 115
-description.Parent = content
+button(home, "Test Notification", function()
 
---========================================================--
--- ONLINE
---========================================================--
+    print("NEGRO HUB: button funzionante!")
 
-local status = Instance.new("Frame")
-status.AnchorPoint = Vector2.new(0.5, 0)
-status.Position = UDim2.fromScale(0.5, 0.56)
-status.Size = UDim2.fromScale(0.42, 0.13)
-status.BackgroundColor3 = Color3.fromRGB(7, 38, 28)
-status.BorderSizePixel = 0
-status.ZIndex = 115
-status.Parent = content
+end)
+
+section(home, "STATUS")
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, 0, 0, 45)
+status.BackgroundColor3 = Color3.fromRGB(8, 40, 28)
+status.Text = "●  NEGRO HUB ONLINE"
+status.TextColor3 = COLORS.Green
+status.TextSize = 14
+status.Font = Enum.Font.GothamBold
+status.ZIndex = 120
+status.Parent = home
 
 local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(1, 0)
+statusCorner.CornerRadius = UDim.new(0, 9)
 statusCorner.Parent = status
 
-local dot = Instance.new("Frame")
-dot.AnchorPoint = Vector2.new(0, 0.5)
-dot.Position = UDim2.fromScale(0.12, 0.5)
-dot.Size = UDim2.fromScale(0.08, 0.3)
-dot.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
-dot.BorderSizePixel = 0
-dot.ZIndex = 120
-dot.Parent = status
-
-local dotCorner = Instance.new("UICorner")
-dotCorner.CornerRadius = UDim.new(1, 0)
-dotCorner.Parent = dot
-
-local online = Instance.new("TextLabel")
-online.Position = UDim2.fromScale(0.25, 0)
-online.Size = UDim2.fromScale(0.65, 1)
-online.BackgroundTransparency = 1
-online.Text = "ONLINE"
-online.TextColor3 = Color3.fromRGB(0, 255, 170)
-online.TextScaled = true
-online.Font = Enum.Font.GothamBold
-online.ZIndex = 120
-online.Parent = status
-
 --========================================================--
--- CERCHIO RIAPRI
+-- VISUALS
 --========================================================--
 
-local reopen = Instance.new("TextButton")
-reopen.Name = "Reopen"
-reopen.AnchorPoint = Vector2.new(0.5, 0)
-reopen.Position = UDim2.fromScale(0.5, 0.025)
-reopen.Size = UDim2.fromOffset(58, 58)
-reopen.BackgroundColor3 = Color3.fromRGB(9, 9, 17)
-reopen.BorderSizePixel = 0
-reopen.Text = "N"
-reopen.TextColor3 = White
-reopen.TextScaled = true
-reopen.Font = Enum.Font.GothamBlack
-reopen.AutoButtonColor = false
-reopen.Visible = false
-reopen.ZIndex = 300
-reopen.Parent = gui
+local visuals = pages.Visuals
 
-local reopenCorner = Instance.new("UICorner")
-reopenCorner.CornerRadius = UDim.new(1, 0)
-reopenCorner.Parent = reopen
+section(visuals, "VISUAL SETTINGS")
 
-local reopenStroke = Instance.new("UIStroke")
-reopenStroke.Thickness = 2
-reopenStroke.Parent = reopen
+toggle(
+    visuals,
+    "RGB Interface",
+    true,
+    function(value)
+        print("RGB:", value)
+    end
+)
+
+toggle(
+    visuals,
+    "Glow Effects",
+    true,
+    function(value)
+        print("Glow:", value)
+    end
+)
+
+toggle(
+    visuals,
+    "Particles",
+    true,
+    function(value)
+        print("Particles:", value)
+    end
+)
+
+slider(
+    visuals,
+    "UI Scale",
+    50,
+    150,
+    100,
+    function(value)
+
+        print("UI Scale:", value)
+
+    end
+)
 
 --========================================================--
--- RGB
+-- MOVEMENT
+--========================================================--
+
+local movement = pages.Movement
+
+section(movement, "MOVEMENT SETTINGS")
+
+slider(
+    movement,
+    "WalkSpeed Setting",
+    1,
+    100,
+    16,
+    function(value)
+
+        print("WalkSpeed setting:", value)
+
+    end
+)
+
+slider(
+    movement,
+    "Jump Setting",
+    1,
+    100,
+    50,
+    function(value)
+
+        print("Jump setting:", value)
+
+    end
+)
+
+toggle(
+    movement,
+    "Movement Preview",
+    false,
+    function(value)
+
+        print("Movement Preview:", value)
+
+    end
+)
+
+--========================================================--
+-- SETTINGS
+--========================================================--
+
+local settings = pages.Settings
+
+section(settings, "INTERFACE")
+
+toggle(
+    settings,
+    "Animations",
+    true,
+    function(value)
+
+        print("Animations:", value)
+
+    end
+)
+
+toggle(
+    settings,
+    "Rainbow Border",
+    true,
+    function(value)
+
+        print("Rainbow Border:", value)
+
+    end
+)
+
+button(
+    settings,
+    "Reset Interface",
+    function()
+
+        hub.Position = UDim2.fromScale(0.5, 0.5)
+
+    end
+)
+
+--========================================================--
+-- ABOUT
+--========================================================--
+
+local about = pages.About
+
+section(about, "ABOUT NEGRO HUB")
+
+local aboutText = Instance.new("TextLabel")
+aboutText.Size = UDim2.new(1, 0, 0, 130)
+aboutText.BackgroundColor3 = Color3.fromRGB(22, 22, 33)
+aboutText.Text =
+    "NEGRO HUB\n\nPremium interface\nModern UI • RGB • Animations\n\nVersion 1.0"
+aboutText.TextColor3 = COLORS.White
+aboutText.TextSize = 15
+aboutText.Font = Enum.Font.GothamMedium
+aboutText.TextWrapped = true
+aboutText.ZIndex = 120
+aboutText.Parent = about
+
+local aboutCorner = Instance.new("UICorner")
+aboutCorner.CornerRadius = UDim.new(0, 10)
+aboutCorner.Parent = aboutText
+
+--========================================================--
+-- RGB HUB ANIMATION
 --========================================================--
 
 task.spawn(function()
@@ -633,14 +1204,7 @@ task.spawn(function()
                 1
             )
 
-        reopenStroke.Color =
-            Color3.fromHSV(
-                (t * 0.15) % 1,
-                0.9,
-                1
-            )
-
-        hubTitleGradient.Offset =
+        titleGradient.Offset =
             Vector2.new(
                 math.sin(t * 0.8) * 0.5,
                 0
@@ -658,25 +1222,36 @@ task.spawn(function()
 end)
 
 --========================================================--
--- HUB ENTRATA
+-- CLOSE / REOPEN
 --========================================================--
 
-Tween(
-    hub,
-    0.75,
-    {
-        Size = UDim2.fromScale(0.58, 0.62)
-    },
-    Enum.EasingStyle.Back
-)
+local reopen = Instance.new("TextButton")
+reopen.Name = "Reopen"
+reopen.AnchorPoint = Vector2.new(0.5, 0)
+reopen.Position = UDim2.fromScale(0.5, 0.025)
+reopen.Size = UDim2.fromOffset(58, 58)
+reopen.BackgroundColor3 = COLORS.Panel
+reopen.BorderSizePixel = 0
+reopen.Text = "N"
+reopen.TextColor3 = COLORS.White
+reopen.TextScaled = true
+reopen.Font = Enum.Font.GothamBlack
+reopen.AutoButtonColor = false
+reopen.Visible = false
+reopen.ZIndex = 500
+reopen.Parent = gui
 
---========================================================--
--- CHIUDI
---========================================================--
+local reopenCorner = Instance.new("UICorner")
+reopenCorner.CornerRadius = UDim.new(1, 0)
+reopenCorner.Parent = reopen
+
+local reopenStroke = Instance.new("UIStroke")
+reopenStroke.Thickness = 2
+reopenStroke.Parent = reopen
 
 local function closeHub()
 
-    local t = Tween(
+    local animation = tween(
         hub,
         0.45,
         {
@@ -686,16 +1261,14 @@ local function closeHub()
         Enum.EasingDirection.In
     )
 
-    t.Completed:Wait()
+    animation.Completed:Wait()
 
-    -- NASCONDE SOLAMENTE L'HUB
     hub.Visible = false
 
-    -- NESSUNO SFONDO VIENE CREATO
     reopen.Visible = true
     reopen.Size = UDim2.fromOffset(0, 0)
 
-    Tween(
+    tween(
         reopen,
         0.45,
         {
@@ -705,13 +1278,9 @@ local function closeHub()
     )
 end
 
---========================================================--
--- RIAPRI
---========================================================--
-
 local function openHub()
 
-    Tween(
+    tween(
         reopen,
         0.25,
         {
@@ -727,51 +1296,112 @@ local function openHub()
     hub.Visible = true
     hub.Size = UDim2.fromScale(0.01, 0.01)
 
-    Tween(
+    tween(
         hub,
         0.65,
         {
-            Size = UDim2.fromScale(0.58, 0.62)
+            Size = UDim2.fromScale(0.62, 0.70)
         },
         Enum.EasingStyle.Back
     )
 end
 
+close.MouseButton1Click:Connect(closeHub)
+reopen.MouseButton1Click:Connect(openHub)
+
 --========================================================--
--- HOVER X
+-- HOVER EFFECTS
 --========================================================--
 
 close.MouseEnter:Connect(function()
 
-    Tween(
-        close,
-        0.15,
-        {
-            BackgroundColor3 = Color3.fromRGB(255, 25, 50),
-            Size = UDim2.fromScale(0.085, 0.65)
-        }
-    )
+    tween(close, 0.15, {
+        BackgroundColor3 = Color3.fromRGB(255, 25, 50)
+    })
 
 end)
 
 close.MouseLeave:Connect(function()
 
-    Tween(
-        close,
-        0.15,
-        {
-            BackgroundColor3 = Red,
-            Size = UDim2.fromScale(0.075, 0.58)
-        }
-    )
+    tween(close, 0.15, {
+        BackgroundColor3 = COLORS.Red
+    })
+
+end)
+
+reopen.MouseEnter:Connect(function()
+
+    tween(reopen, 0.15, {
+        Size = UDim2.fromOffset(64, 64)
+    })
+
+end)
+
+reopen.MouseLeave:Connect(function()
+
+    tween(reopen, 0.15, {
+        Size = UDim2.fromOffset(58, 58)
+    })
 
 end)
 
 --========================================================--
--- CLICK
+-- MINIMIZE
 --========================================================--
 
-close.MouseButton1Click:Connect(closeHub)
-reopen.MouseButton1Click:Connect(openHub)
+local minimized = false
+local fullSize = UDim2.fromScale(0.62, 0.70)
 
-print("NEGRO HUB: LOADED SUCCESSFULLY")
+minimize.MouseButton1Click:Connect(function()
+
+    minimized = not minimized
+
+    if minimized then
+
+        body.Visible = false
+
+        tween(
+            hub,
+            0.3,
+            {
+                Size = UDim2.fromScale(0.62, 0.18)
+            }
+        )
+
+        minimize.Text = "+"
+
+    else
+
+        body.Visible = true
+
+        tween(
+            hub,
+            0.35,
+            {
+                Size = fullSize
+            }
+        )
+
+        minimize.Text = "−"
+    end
+end)
+
+--========================================================--
+-- HUB START
+--========================================================--
+
+hub.Size = UDim2.fromScale(0.01, 0.01)
+
+tween(
+    hub,
+    0.75,
+    {
+        Size = fullSize
+    },
+    Enum.EasingStyle.Back
+)
+
+print("================================")
+print("       NEGRO HUB LOADED")
+print("       VERSION 1.0")
+print("================================")
