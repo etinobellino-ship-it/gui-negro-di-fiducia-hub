@@ -1,5 +1,5 @@
 --========================================================--
---              NEGRO HUB ULTRA - V3 (BLADE BALL)          --
+--              NEGRO HUB ULTRA - V4 (ANTI-KICK)           --
 --========================================================--
 
 local CoreGui = game:GetService("CoreGui")
@@ -7,7 +7,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --========================================================--
 -- CLEANUP
@@ -41,8 +41,6 @@ local Gray   = Color3.fromRGB(135, 135, 155)
 
 --========================================================--
 -- LISTA GIOCHI
--- status: "ok" = supportato | "soon" = in arrivo | "dev" = in sviluppo
--- per i giochi supportati puoi definire una funzione "open" che apre il loro hub
 --========================================================--
 
 local GAMES = {
@@ -86,7 +84,7 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = CoreGui
 
 --========================================================--
--- INTRO (invariata dal V2)
+-- INTRO
 --========================================================--
 
 local intro = Instance.new("Frame")
@@ -665,11 +663,10 @@ task.wait(0.7)
 tutorial:Destroy()
 
 --========================================================--
--- FUNZIONE: APRI HUB BLADE BALL
+-- FUNZIONE: APRI HUB BLADE BALL (ANTI-KICK)
 --========================================================--
 
 local function openBladeBallHub()
-    -- Evita duplicati
     local existing = CoreGui:FindFirstChild("BladeBallHub")
     if existing then existing:Destroy() end
 
@@ -787,7 +784,7 @@ local function openBladeBallHub()
     secGradient.Color = ColorSequence.new(Color3.fromRGB(255, 60, 80), Color3.fromRGB(200, 0, 255))
     secGradient.Parent = secTitle
 
-    -- Toggle Auto Parry (placeholder, la logica è sotto)
+    -- Toggle Auto Parry
     local apRow = Instance.new("Frame")
     apRow.Position = UDim2.new(0, 0, 0, 32)
     apRow.Size = UDim2.new(1, 0, 0, 44)
@@ -837,79 +834,96 @@ local function openBladeBallHub()
     apKC.CornerRadius = UDim.new(1, 0)
     apKC.Parent = apKnob
 
-    -- Stato Auto Parry
+    -- Info
+    local infoLbl = Instance.new("TextLabel")
+    infoLbl.Position = UDim2.new(0, 0, 0, 86)
+    infoLbl.Size = UDim2.new(1, 0, 0, 70)
+    infoLbl.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
+    infoLbl.BorderSizePixel = 0
+    infoLbl.Text = "L'auto parry rileva quando la palla ti sta puntando\ne para automaticamente quando è abbastanza vicina.\n\nVersione anti-kick attiva."
+    infoLbl.TextColor3 = Gray
+    infoLbl.TextScaled = true
+    infoLbl.Font = Enum.Font.Gotham
+    infoLbl.TextWrapped = true
+    infoLbl.ZIndex = 116
+    infoLbl.Parent = bbContent
+
+    local infoC = Instance.new("UICorner")
+    infoC.CornerRadius = UDim.new(0, 10)
+    infoC.Parent = infoLbl
+
+    -- ========================================================
+    -- LOGICA AUTO PARRY (ANTI-KICK)
+    -- ========================================================
+
+    local Player = Players.LocalPlayer
+    local Balls = workspace:WaitForChild("Balls", 9e9)
+    local Remotes = ReplicatedStorage:WaitForChild("Remotes", 9e9)
+
     local autoParryActive = false
     local ballConnection = nil
-    local lastParry = 0
-    local PARry_COOLDOWN = 1
-    local PARry_THRESHOLD = 0.55 -- secondi di tempo di impatto per parry
 
-    local function getRealBall()
-        for _, Ball in ipairs(workspace:GetChildren()) do
-            if Ball.Name == "Balls" then
-                for _, b in ipairs(Ball:GetChildren()) do
-                    if b:IsA("BasePart") and b:GetAttribute("realBall") then
-                        return b
-                    end
-                end
-            end
-        end
-        return nil
+    local function VerifyBall(Ball)
+        return typeof(Ball) == "Instance" and Ball:IsA("BasePart")
+            and Ball:IsDescendantOf(Balls)
+            and Ball:GetAttribute("realBall") == true
     end
 
-    local function parry()
-        local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-        if remotes then
-            local parryRemote = remotes:FindFirstChild("ParryButtonPress")
-            if parryRemote then
-                parryRemote:Fire()
-                return true
-            end
-        end
-        -- Fallback: simula click sinistro
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        return true
+    local function IsTarget()
+        -- Il metodo più affidabile: la palla ha un attributo "target" col nome del giocatore
+        return (Player.Character and Player.Character:FindFirstChild("Highlight"))
     end
 
-    local function startAutoParry()
+    local function Parry()
+        local parryRemote = Remotes:FindFirstChild("ParryButtonPress")
+        if parryRemote then
+            parryRemote:Fire()
+        end
+    end
+
+    local function StartAutoParry()
         if ballConnection then ballConnection:Disconnect() end
 
-        ballConnection = RunService.Heartbeat:Connect(function()
-            if not autoParryActive then return end
-            if tick() - lastParry < PARry_COOLDOWN then return end
+        ballConnection = Balls.ChildAdded:Connect(function(Ball)
+            if not VerifyBall(Ball) then return end
 
-            local player = Players.LocalPlayer
-            local char = player.Character
-            if not char then return end
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            if not hrp then return end
+            local oldPosition = Ball.Position
+            local oldTick = tick()
 
-            local ball = getRealBall()
-            if not ball then return end
+            local posConnection
+            posConnection = Ball:GetPropertyChangedSignal("Position"):Connect(function()
+                if not autoParryActive then return end
 
-            -- Controlla se la palla ci sta puntando
-            local target = ball:GetAttribute("target")
-            if target ~= player.Name then return end
+                if IsTarget() then
+                    local distance = (Ball.Position - workspace.CurrentCamera.Focus.Position).Magnitude
+                    local velocity = (oldPosition - Ball.Position).Magnitude
 
-            -- Calcola tempo di impatto
-            local distance = (hrp.Position - ball.Position).Magnitude
-            local zoomies = ball:FindFirstChild("zoomies")
-            if not zoomies then return end
-            local vel = zoomies:FindFirstChild("VectorVelocity")
-            if not vel then return end
-            local speed = vel.Value.Magnitude
-            if speed < 1 then return end
+                    if velocity > 0 and distance > 0 then
+                        local timeToImpact = distance / velocity
 
-            local timeToImpact = distance / speed
+                        -- Soglia con leggera variazione casuale per non essere robotico
+                        local threshold = 0.55 + (math.random(-5, 5) / 100)
 
-            if timeToImpact <= PARry_THRESHOLD then
-                parry()
-                lastParry = tick()
-            end
+                        if timeToImpact <= threshold then
+                            Parry()
+                            task.wait(0.1) -- cooldown per evitare spam
+                        end
+                    end
+                end
+
+                if (tick() - oldTick) >= 1/60 then
+                    oldPosition = Ball.Position
+                    oldTick = tick()
+                end
+            end)
+
+            Ball.Destroying:Connect(function()
+                if posConnection then posConnection:Disconnect() end
+            end)
         end)
     end
 
-    local function stopAutoParry()
+    local function StopAutoParry()
         if ballConnection then
             ballConnection:Disconnect()
             ballConnection = nil
@@ -921,11 +935,11 @@ local function openBladeBallHub()
         if autoParryActive then
             Tween(apToggle, 0.2, {BackgroundColor3 = Green})
             Tween(apKnob, 0.2, {Position = UDim2.new(1, -21, 0.5, -9)})
-            startAutoParry()
+            StartAutoParry()
         else
             Tween(apToggle, 0.2, {BackgroundColor3 = Color3.fromRGB(55, 55, 75)})
             Tween(apKnob, 0.2, {Position = UDim2.new(0, 3, 0.5, -9)})
-            stopAutoParry()
+            StopAutoParry()
         end
     end
 
@@ -939,24 +953,6 @@ local function openBladeBallHub()
     apRow.MouseLeave:Connect(function()
         Tween(apRow, 0.15, {BackgroundColor3 = Color3.fromRGB(22, 22, 36)})
     end)
-
-    -- Info
-    local infoLbl = Instance.new("TextLabel")
-    infoLbl.Position = UDim2.new(0, 0, 0, 86)
-    infoLbl.Size = UDim2.new(1, 0, 0, 60)
-    infoLbl.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
-    infoLbl.BorderSizePixel = 0
-    infoLbl.Text = "L'auto parry rileva quando la palla ti sta puntando\ne para automaticamente quando è abbastanza vicina."
-    infoLbl.TextColor3 = Gray
-    infoLbl.TextScaled = true
-    infoLbl.Font = Enum.Font.Gotham
-    infoLbl.TextWrapped = true
-    infoLbl.ZIndex = 116
-    infoLbl.Parent = bbContent
-
-    local infoC = Instance.new("UICorner")
-    infoC.CornerRadius = UDim.new(0, 10)
-    infoC.Parent = infoLbl
 
     -- Drag per la finestra BB
     local dragging = false
@@ -987,7 +983,7 @@ local function openBladeBallHub()
     bbFrame.Size = UDim2.fromScale(0.01, 0.01)
     Tween(bbFrame, 0.6, {Size = UDim2.fromScale(0.45, 0.55)}, Enum.EasingStyle.Back)
 
-    print("[BLADE BALL HUB] Aperto!")
+    print("[BLADE BALL HUB] Aperto (Versione Anti-Kick)")
 end
 
 --========================================================--
@@ -1060,7 +1056,7 @@ local subtitle = Instance.new("TextLabel")
 subtitle.Position = UDim2.fromScale(0.052, 0.61)
 subtitle.Size = UDim2.fromScale(0.6, 0.25)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "Premium Script Hub • V3"
+subtitle.Text = "Premium Script Hub • V4"
 subtitle.TextColor3 = Gray
 subtitle.TextScaled = true
 subtitle.Font = Enum.Font.GothamMedium
@@ -1092,7 +1088,7 @@ closeStroke.Thickness = 1
 closeStroke.Parent = close
 
 --========================================================--
--- SIDEBAR (solo Home + Giochi)
+-- SIDEBAR
 --========================================================--
 
 local sidebar = Instance.new("Frame")
@@ -1145,7 +1141,7 @@ contentPad.PaddingRight = UDim.new(0, 12)
 contentPad.Parent = content
 
 --========================================================--
--- PAGINE (solo Home e Giochi)
+-- PAGINE
 --========================================================--
 
 local pages = {}
@@ -1267,7 +1263,7 @@ sidebarButtons[bHome](true)
 showPage("Home")
 
 --========================================================--
--- CONTENUTO PAGINA HOME (vuota)
+-- CONTENUTO PAGINA HOME
 --========================================================--
 
 local homeWelcome = Instance.new("TextLabel")
@@ -1347,12 +1343,10 @@ for _, game in ipairs(GAMES) do
     bt.ZIndex = 118
     bt.Parent = badge
 
-    -- Click: se Blade Ball, apri il suo hub
     if game.id == "bladeball" then
         row.MouseButton1Click:Connect(function()
             openBladeBallHub()
         end)
-        -- Rendi più evidente che è cliccabile
         row.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
         n.TextColor3 = Color3.fromRGB(255, 120, 150)
     end
@@ -1515,4 +1509,4 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
-print("NEGRO HUB V3: LOADED SUCCESSFULLY ✅")
+print("NEGRO HUB V4 (ANTI-KICK): LOADED SUCCESSFULLY ✅")
