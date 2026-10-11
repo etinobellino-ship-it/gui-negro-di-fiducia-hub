@@ -1,6 +1,6 @@
 --========================================================--
---         STEAL AN EGG - STANDALONE GUI (V1)              --
---   ESP corretto: legge uova nel mondo + uova animali     --
+--         STEAL AN EGG - STANDALONE GUI (V2)              --
+--   ESP corretto: solo uova RARE, esclude models/treadmill --
 --========================================================--
 
 local CoreGui = game:GetService("CoreGui")
@@ -105,7 +105,7 @@ local title = Instance.new("TextLabel")
 title.Position = UDim2.fromScale(0.04, 0)
 title.Size = UDim2.fromScale(0.8, 1)
 title.BackgroundTransparency = 1
-title.Text = "STEAL AN EGG • UTILITY"
+title.Text = "STEAL AN EGG • RARE ONLY"
 title.TextColor3 = Purple
 title.TextScaled = true
 title.Font = Enum.Font.GothamBlack
@@ -421,7 +421,7 @@ local function makeSlider(name, minV, maxV, defaultV, callback)
 end
 
 --========================================================--
--- LOGICA EGG (ESP CORRETTO CON SUPPORTO ANIMALI)
+-- LOGICA EGG (ESP FILTRATO PER RARITÀ)
 --========================================================--
 
 local eggESPEnabled = false
@@ -429,6 +429,7 @@ local eggAutoCollectEnabled = false
 local eggSpeedEnabled = false
 local eggNotifierEnabled = false
 local eggSpeedValue = 150
+local minRarityScore = 2 -- Default: "Rare"
 
 local eggESPConnections = {}
 local eggAutoCollectConnection = nil
@@ -436,7 +437,86 @@ local eggNotifierConnection = nil
 local eggSpeedConnection = nil
 
 --========================================================--
--- GET ALL EGGS (CORRETTO: include uova mondo, pen, carried, dropped, animali)
+-- RARITY SCORING (0-5)
+--========================================================--
+
+local function GetEggRarityScore(name)
+    local n = name:lower()
+    local score = 0
+
+    -- Comune (0)
+    if n:find("basic") or n:find("common") or n:find("starter") or n:find("bronze") then
+        score = 0
+    -- Non comune (1)
+    elseif n:find("uncommon") or n:find("silver") then
+        score = 1
+    -- Raro (2)
+    elseif n:find("rare") or n:find("gold") then
+        score = 2
+    -- Epico (3)
+    elseif n:find("epic") or n:find("platinum") then
+        score = 3
+    -- Leggendario (4)
+    elseif n:find("legendary") or n:find("diamond") then
+        score = 4
+    -- Mitico / Divino (5)
+    elseif n:find("mythic") or n:find("divine") or n:find("secret")
+        or n:find("brainrot god") or n:find("godspeed") or n:find("godly") then
+        score = 5
+    end
+
+    return score
+end
+
+--========================================================--
+-- IS REAL EGG (esclude models, treadmill, etc.)
+--========================================================--
+
+local EXCLUDE_KEYWORDS = {
+    "treadmill", "tread mill", "machine", "guard", "pet", "plot",
+    "base", "drop pad", "spawner", "cage", "portal", "teleporter",
+    "platform", "conveyor", "belt", "wall", "floor", "spawn",
+    "sign", "button", "lever", "door", "gate", "chest", "shop",
+    "npc", "dummy", "target", "orb", "beam", "effect", "particle",
+}
+
+local function IsRealEgg(obj, name)
+    local n = name:lower()
+
+    -- Esclude esplicitamente parole chiave non-uovo
+    for _, kw in ipairs(EXCLUDE_KEYWORDS) do
+        if n:find(kw) then
+            return false
+        end
+    end
+
+    -- Deve contenere una parola chiave uovo
+    if not (n:find("egg") or n:find("uovo") or n:find("lucky block")
+        or n:find("mystery") or n:find("brainrot egg")) then
+        return false
+    end
+
+    -- Deve avere una BasePart
+    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+    if not part then
+        return false
+    end
+
+    -- Se è un Model, deve avere una BasePart e non essere solo decorazione
+    if obj:IsA("Model") then
+        local hasPart = part ~= nil
+        local isAnchored = part.Anchored
+        -- Modelli con parti ancorate sono probabilmente decorazioni
+        if isAnchored and not n:find("egg") then
+            return false
+        end
+    end
+
+    return true
+end
+
+--========================================================--
+-- GET ALL EGGS (solo uova rare)
 --========================================================--
 
 local function GetAllEggs()
@@ -450,16 +530,14 @@ local function GetAllEggs()
             object = obj,
             part = part,
             source = source or "world",
+            rarityScore = GetEggRarityScore(obj.Name),
         })
     end
 
-    -- 1. Uova nel mondo (Workspace, cartelle comuni)
+    -- 1. Uova nel mondo (Workspace)
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("Model") or obj:IsA("BasePart") then
-            local name = obj.Name:lower()
-            -- Pattern esteso: include uova, egg, uovo, lucky block, mystery, brainrot
-            if name:find("egg") or name:find("uovo") or name:find("lucky block")
-            or name:find("mystery") or name:find("brainrot egg") then
+            if IsRealEgg(obj, obj.Name) then
                 local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                 if part then
                     addEgg(obj, part, "world")
@@ -468,15 +546,15 @@ local function GetAllEggs()
         end
     end
 
-    -- 2. Uova trasportate (carried) - cercate nella character del giocatore e degli altri
+    -- 2. Uova trasportate (carried) - character dei giocatori
     for _, player in ipairs(Players:GetPlayers()) do
         local char = player.Character
         if char then
             for _, obj in ipairs(char:GetDescendants()) do
                 if obj:IsA("Model") or obj:IsA("BasePart") then
                     local name = obj.Name:lower()
-                    if name:find("egg") or name:find("uovo") or name:find("carried")
-                    or name:find("held") then
+                    if (name:find("egg") or name:find("uovo") or name:find("carried")
+                        or name:find("held")) and IsRealEgg(obj, obj.Name) then
                         local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                         if part then
                             addEgg(obj, part, "carried")
@@ -487,16 +565,14 @@ local function GetAllEggs()
         end
     end
 
-    -- 3. Uova nel pen (recinto) del giocatore locale
+    -- 3. Uova nel pen del giocatore locale
     local myPlot = Workspace:FindFirstChild(LocalPlayer.Name .. "_Plot")
         or Workspace:FindFirstChild(LocalPlayer.Name .. "Plot")
         or Workspace:FindFirstChild("Plot_" .. LocalPlayer.Name)
     if myPlot then
         for _, obj in ipairs(myPlot:GetDescendants()) do
             if obj:IsA("Model") or obj:IsA("BasePart") then
-                local name = obj.Name:lower()
-                if name:find("egg") or name:find("uovo") or name:find("pen")
-                or name:find("placed") then
+                if IsRealEgg(obj, obj.Name) then
                     local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                     if part then
                         addEgg(obj, part, "pen")
@@ -506,7 +582,7 @@ local function GetAllEggs()
         end
     end
 
-    -- 4. Uova droppate (dropped) - in cartelle comuni
+    -- 4. Uova droppate
     local eggFolders = {
         Workspace:FindFirstChild("Eggs"),
         Workspace:FindFirstChild("DroppedEggs"),
@@ -517,16 +593,26 @@ local function GetAllEggs()
         if folder then
             for _, obj in ipairs(folder:GetDescendants()) do
                 if obj:IsA("Model") or obj:IsA("BasePart") then
-                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                    if part then
-                        addEgg(obj, part, "dropped")
+                    if IsRealEgg(obj, obj.Name) then
+                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            addEgg(obj, part, "dropped")
+                        end
                     end
                 end
             end
         end
     end
 
-    return eggs
+    -- Filtra per rarità minima
+    local filtered = {}
+    for _, egg in ipairs(eggs) do
+        if egg.rarityScore >= minRarityScore then
+            table.insert(filtered, egg)
+        end
+    end
+
+    return filtered
 end
 
 --========================================================--
@@ -557,7 +643,7 @@ local function GetNearestEgg()
 end
 
 --========================================================--
--- MOVE TO EGG (con BodyVelocity)
+-- MOVE TO EGG
 --========================================================--
 
 local function MoveToEgg(egg)
@@ -607,12 +693,12 @@ local function CollectEgg(egg)
 end
 
 --========================================================--
--- SEZIONE: EGG ESP
+-- SEZIONE: EGG ESP (RARE ONLY)
 --========================================================--
 
-makeSection("EGG ESP", Purple)
+makeSection("EGG ESP (RARE ONLY)", Purple)
 
-makeToggle("Egg ESP (Uova + Animali)", false, function(state)
+makeToggle("Egg ESP (Solo Uova Rare)", false, function(state)
     eggESPEnabled = state
 
     if state then
@@ -626,13 +712,13 @@ makeToggle("Egg ESP (Uova + Animali)", false, function(state)
             local billboard = Instance.new("BillboardGui")
             billboard.Name = "EggESP"
             billboard.Adornee = egg.part
-            billboard.Size = UDim2.new(0, 140, 0, 50)
+            billboard.Size = UDim2.new(0, 160, 0, 55)
             billboard.StudsOffset = Vector3.new(0, 3, 0)
             billboard.AlwaysOnTop = true
             billboard.Parent = espFolder
 
             local label = Instance.new("TextLabel")
-            label.Size = UDim2.fromScale(1, 0.55)
+            label.Size = UDim2.fromScale(1, 0.5)
             label.BackgroundTransparency = 0.3
             label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
             label.Text = "🥚 " .. egg.object.Name
@@ -647,7 +733,7 @@ makeToggle("Egg ESP (Uova + Animali)", false, function(state)
 
             local sourceLabel = Instance.new("TextLabel")
             sourceLabel.Size = UDim2.fromScale(1, 0.25)
-            sourceLabel.Position = UDim2.fromScale(0, 0.55)
+            sourceLabel.Position = UDim2.fromScale(0, 0.5)
             sourceLabel.BackgroundTransparency = 1
             sourceLabel.TextColor3 = Color3.fromRGB(200, 180, 255)
             sourceLabel.TextScaled = true
@@ -656,8 +742,8 @@ makeToggle("Egg ESP (Uova + Animali)", false, function(state)
             sourceLabel.Parent = billboard
 
             local distLabel = Instance.new("TextLabel")
-            distLabel.Size = UDim2.fromScale(1, 0.2)
-            distLabel.Position = UDim2.fromScale(0, 0.8)
+            distLabel.Size = UDim2.fromScale(1, 0.25)
+            distLabel.Position = UDim2.fromScale(0, 0.75)
             distLabel.BackgroundTransparency = 1
             distLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
             distLabel.TextScaled = true
@@ -692,19 +778,15 @@ makeToggle("Egg ESP (Uova + Animali)", false, function(state)
             table.insert(eggESPConnections, updateConn)
         end
 
-        -- Crea ESP per tutte le uova esistenti
         for _, egg in ipairs(GetAllEggs()) do
             createESP(egg)
         end
 
-        -- Monitora nuove uova
         local newEggConn = Workspace.DescendantAdded:Connect(function(obj)
             if not eggESPEnabled then return end
             task.wait(0.3)
             if obj:IsA("Model") or obj:IsA("BasePart") then
-                local name = obj.Name:lower()
-                if name:find("egg") or name:find("uovo") or name:find("lucky block")
-                or name:find("mystery") or name:find("carried") or name:find("held") then
+                if IsRealEgg(obj, obj.Name) then
                     local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                     if part then
                         createESP({ object = obj, part = part, source = "world" })
@@ -724,12 +806,25 @@ makeToggle("Egg ESP (Uova + Animali)", false, function(state)
 end)
 
 --========================================================--
+-- SEZIONE: FILTRO RARITÀ
+--========================================================--
+
+makeSection("FILTRO RARITÀ", Cyan)
+
+makeSlider("Rarità Minima", 0, 5, 2, function(value)
+    minRarityScore = math.floor(value + 0.5)
+    local names = {"Comune", "Non Comune", "Raro", "Epico", "Leggendario", "Mitico/Divino"}
+    local display = names[minRarityScore + 1] or "Raro"
+    print("[Egg ESP] Rarità minima: " .. display)
+end)
+
+--========================================================--
 -- SEZIONE: AUTO COLLECT
 --========================================================--
 
 makeSection("AUTO COLLECT", Green)
 
-makeToggle("Auto Collect Egg", false, function(state)
+makeToggle("Auto Collect Egg (Solo Rare)", false, function(state)
     eggAutoCollectEnabled = state
     if state then
         if eggAutoCollectConnection then eggAutoCollectConnection:Disconnect() end
@@ -752,7 +847,7 @@ makeToggle("Auto Collect Egg", false, function(state)
     end
 end)
 
-makeButton("🎯 Vai all'Uovo più Vicino", Color3.fromRGB(130, 80, 200), function()
+makeButton("🎯 Vai all'Uovo Raro più Vicino", Color3.fromRGB(130, 80, 200), function()
     local nearestEgg, dist = GetNearestEgg()
     if nearestEgg then
         MoveToEgg(nearestEgg)
@@ -761,7 +856,7 @@ makeButton("🎯 Vai all'Uovo più Vicino", Color3.fromRGB(130, 80, 200), functi
         end)
         print("[Egg] Muovendosi verso: " .. nearestEgg.object.Name .. " [" .. nearestEgg.source .. "] (" .. math.floor(dist) .. " studs)")
     else
-        print("[Egg] Nessun uovo trovato.")
+        print("[Egg] Nessuna uovo raro trovata.")
     end
 end)
 
@@ -832,23 +927,25 @@ end)
 
 makeSection("NOTIFICHE & INFO", Cyan)
 
-makeToggle("Egg Spawn Notifier", false, function(state)
+makeToggle("Egg Spawn Notifier (Solo Rare)", false, function(state)
     eggNotifierEnabled = state
     if state then
         if eggNotifierConnection then eggNotifierConnection:Disconnect() end
         eggNotifierConnection = Workspace.DescendantAdded:Connect(function(obj)
             if not eggNotifierEnabled then return end
             if obj:IsA("Model") or obj:IsA("BasePart") then
-                local name = obj.Name:lower()
-                if name:find("egg") or name:find("uovo") or name:find("lucky block") then
-                    pcall(function()
-                        game:GetService("StarterGui"):SetCore("SendNotification", {
-                            Title = "🥚 Uovo Spawnato!",
-                            Text = obj.Name .. " è apparso!",
-                            Duration = 3,
-                        })
-                    end)
-                    print("[Egg] Nuovo uovo: " .. obj.Name)
+                if IsRealEgg(obj, obj.Name) then
+                    local score = GetEggRarityScore(obj.Name)
+                    if score >= minRarityScore then
+                        pcall(function()
+                            game:GetService("StarterGui"):SetCore("SendNotification", {
+                                Title = "🥚 Uovo Raro Spawnato!",
+                                Text = obj.Name .. " è apparso!",
+                                Duration = 3,
+                            })
+                        end)
+                        print("[Egg] Nuovo uovo raro: " .. obj.Name)
+                    end
                 end
             end
         end)
@@ -860,20 +957,21 @@ makeToggle("Egg Spawn Notifier", false, function(state)
     end
 end)
 
-makeButton("📋 Mostra Lista Uova", Color3.fromRGB(80, 130, 200), function()
+makeButton("📋 Mostra Lista Uova Rare", Color3.fromRGB(80, 130, 200), function()
     local eggs = GetAllEggs()
-    print("========== LISTA UOVA ==========")
+    print("========== LISTA UOVA RARE ==========")
     if #eggs == 0 then
-        print("Nessuna uovo trovata.")
+        print("Nessuna uovo rara trovata.")
     else
         for i, egg in ipairs(eggs) do
             local char = LocalPlayer.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             local dist = hrp and (egg.part.Position - hrp.Position).Magnitude or 0
-            print(string.format("[%d] %s | Fonte: %s | Distanza: %.0f studs", i, egg.object.Name, egg.source, dist))
+            print(string.format("[%d] %s | Rarità: %d | Fonte: %s | Distanza: %.0f studs",
+                i, egg.object.Name, egg.rarityScore, egg.source, dist))
         end
     end
-    print("================================")
+    print("=====================================")
 end)
 
 --========================================================--
@@ -911,4 +1009,4 @@ end)
 mainFrame.Size = UDim2.fromScale(0.01, 0.01)
 Tween(mainFrame, 0.6, {Size = UDim2.fromScale(0.52, 0.78)}, Enum.EasingStyle.Back)
 
-print("[STEAL AN EGG] GUI caricata con successo! ESP attivo su uova mondo, animali, pen e dropped.")
+print("[STEAL AN EGG] GUI caricata! ESP filtra solo uova RARE (punteggio >= 2).")
