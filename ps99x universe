@@ -1,0 +1,390 @@
+--[[
+    ═══════════════════════════════════════════════════
+     Case Farm Hub  |  Executor: Xeno
+     Features:
+       • Salva / rimuovi / pulisci punti di teletrasporto
+       • Auto-Teleport ciclico con delay configurabile
+       • Auto-Press E sui ProximityPrompt (spam)
+       • Hotkey RightShift per nascondere la GUI
+    ═══════════════════════════════════════════════════
+]]
+
+local Players              = game:GetService("Players")
+local UserInputService     = game:GetService("UserInputService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local VirtualInputManager  = game:GetService("VirtualInputManager")
+
+local LP = Players.LocalPlayer
+
+-- ===================== STATE =====================
+local positions    = {}
+local autoTP       = false
+local autoE        = false
+local cycleIndex   = 1
+local delayTime    = 4.5
+local currentPrompt = nil
+
+-- ===================== HELPERS ===================
+local function getHRP()
+    local c = LP.Character
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+local function teleportTo(vec3)
+    local hrp = getHRP()
+    if hrp then
+        hrp.CFrame = CFrame.new(vec3)
+    end
+end
+
+-- ===================== GUI =======================
+local gui = Instance.new("ScreenGui")
+gui.Name = "CaseFarmHub_" .. tostring(math.random(1000, 9999))
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+if gethui then
+    pcall(function() gui.Parent = gethui() end)
+elseif syn and syn.protect_gui then
+    pcall(function() syn.protect_gui(gui); gui.Parent = game:GetService("CoreGui") end)
+end
+if not gui.Parent then
+    gui.Parent = LP:WaitForChild("PlayerGui")
+end
+
+local main = Instance.new("Frame")
+main.Size              = UDim2.new(0, 330, 0, 500)
+main.Position          = UDim2.new(0.5, -165, 0.5, -250)
+main.BackgroundColor3  = Color3.fromRGB(22, 22, 28)
+main.BorderSizePixel   = 0
+main.Parent            = gui
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
+
+local stroke = Instance.new("UIStroke", main)
+stroke.Color     = Color3.fromRGB(60, 60, 75)
+stroke.Thickness = 1
+
+-- ===== Title bar =====
+local titleBar = Instance.new("Frame")
+titleBar.Size             = UDim2.new(1, 0, 0, 42)
+titleBar.BackgroundColor3 = Color3.fromRGB(32, 32, 42)
+titleBar.BorderSizePixel  = 0
+titleBar.Parent           = main
+Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 12)
+
+local titleBottom = Instance.new("Frame")
+titleBottom.Size             = UDim2.new(1, 0, 0, 12)
+titleBottom.Position         = UDim2.new(0, 0, 1, -12)
+titleBottom.BackgroundColor3 = Color3.fromRGB(32, 32, 42)
+titleBottom.BorderSizePixel  = 0
+titleBottom.Parent           = titleBar
+
+local titleLbl = Instance.new("TextLabel")
+titleLbl.Size              = UDim2.new(1, -50, 1, 0)
+titleLbl.Position          = UDim2.new(0, 15, 0, 0)
+titleLbl.BackgroundTransparency = 1
+titleLbl.Text              = "Case Farm Hub"
+titleLbl.TextColor3        = Color3.fromRGB(240, 240, 250)
+titleLbl.Font              = Enum.Font.GothamBold
+titleLbl.TextSize          = 16
+titleLbl.TextXAlignment    = Enum.TextXAlignment.Left
+titleLbl.Parent            = titleBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size             = UDim2.new(0, 30, 0, 30)
+closeBtn.Position         = UDim2.new(1, -38, 0.5, -15)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+closeBtn.Text             = "×"
+closeBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+closeBtn.Font             = Enum.Font.GothamBold
+closeBtn.TextSize         = 18
+closeBtn.BorderSizePixel  = 0
+closeBtn.Parent           = titleBar
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+closeBtn.MouseButton1Click:Connect(function() gui.Enabled = false end)
+
+-- ===== Drag =====
+local dragging, dragInput, dragStart, startPos
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging  = true
+        dragStart = input.Position
+        startPos  = main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+titleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local d = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + d.X,
+            startPos.Y.Scale, startPos.Y.Offset + d.Y
+        )
+    end
+end)
+
+-- ===== Lista posizioni =====
+local listFrame = Instance.new("ScrollingFrame")
+listFrame.Size             = UDim2.new(1, -20, 0, 200)
+listFrame.Position         = UDim2.new(0, 10, 0, 52)
+listFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+listFrame.BorderSizePixel  = 0
+listFrame.CanvasSize       = UDim2.new(0, 0, 0, 0)
+listFrame.ScrollBarThickness = 4
+listFrame.Parent           = main
+Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 8)
+
+local listLayout = Instance.new("UIListLayout", listFrame)
+listLayout.Padding   = UDim.new(0, 4)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local listPad = Instance.new("UIPadding", listFrame)
+listPad.PaddingTop   = UDim.new(0, 6)
+listPad.PaddingLeft  = UDim.new(0, 4)
+listPad.PaddingRight = UDim.new(0, 4)
+
+listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    listFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 12)
+end)
+
+-- ===== refreshList =====
+local function refreshList()
+    for _, c in ipairs(listFrame:GetChildren()) do
+        if c:IsA("Frame") then c:Destroy() end
+    end
+    for i, pos in ipairs(positions) do
+        local row = Instance.new("Frame")
+        row.Size             = UDim2.new(1, -8, 0, 34)
+        row.BackgroundColor3 = Color3.fromRGB(42, 42, 52)
+        row.BorderSizePixel  = 0
+        row.Parent           = listFrame
+        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+
+        local numLbl = Instance.new("TextLabel")
+        numLbl.Size              = UDim2.new(0, 30, 1, 0)
+        numLbl.Position          = UDim2.new(0, 8, 0, 0)
+        numLbl.BackgroundTransparency = 1
+        numLbl.Text              = "#" .. i
+        numLbl.TextColor3        = Color3.fromRGB(120, 180, 255)
+        numLbl.Font              = Enum.Font.GothamBold
+        numLbl.TextSize          = 13
+        numLbl.TextXAlignment    = Enum.TextXAlignment.Left
+        numLbl.Parent            = row
+
+        local coordLbl = Instance.new("TextLabel")
+        coordLbl.Size              = UDim2.new(1, -80, 1, 0)
+        coordLbl.Position          = UDim2.new(0, 40, 0, 0)
+        coordLbl.BackgroundTransparency = 1
+        coordLbl.Text              = string.format("X:%.1f  Y:%.1f  Z:%.1f", pos.X, pos.Y, pos.Z)
+        coordLbl.TextColor3        = Color3.fromRGB(210, 210, 220)
+        coordLbl.Font              = Enum.Font.Gotham
+        coordLbl.TextSize          = 12
+        coordLbl.TextXAlignment    = Enum.TextXAlignment.Left
+        coordLbl.Parent            = row
+
+        local del = Instance.new("TextButton")
+        del.Size             = UDim2.new(0, 26, 0, 26)
+        del.Position         = UDim2.new(1, -32, 0.5, -13)
+        del.BackgroundColor3 = Color3.fromRGB(160, 55, 55)
+        del.Text             = "×"
+        del.TextColor3       = Color3.fromRGB(255, 255, 255)
+        del.Font             = Enum.Font.GothamBold
+        del.TextSize         = 14
+        del.BorderSizePixel  = 0
+        del.Parent           = row
+        Instance.new("UICorner", del).CornerRadius = UDim.new(0, 6)
+
+        del.MouseButton1Click:Connect(function()
+            table.remove(positions, i)
+            if cycleIndex > #positions then cycleIndex = 1 end
+            refreshList()
+        end)
+    end
+end
+
+-- ===== Save / Clear =====
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size             = UDim2.new(0.6, -15, 0, 36)
+saveBtn.Position         = UDim2.new(0, 10, 0, 260)
+saveBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
+saveBtn.Text             = "Salva Posizione"
+saveBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+saveBtn.Font             = Enum.Font.GothamBold
+saveBtn.TextSize         = 14
+saveBtn.BorderSizePixel  = 0
+saveBtn.Parent           = main
+Instance.new("UICorner", saveBtn).CornerRadius = UDim.new(0, 8)
+
+local clearBtn = Instance.new("TextButton")
+clearBtn.Size             = UDim2.new(0.4, -15, 0, 36)
+clearBtn.Position         = UDim2.new(0.6, 5, 0, 260)
+clearBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+clearBtn.Text             = "Pulisci"
+clearBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+clearBtn.Font             = Enum.Font.GothamBold
+clearBtn.TextSize         = 14
+clearBtn.BorderSizePixel  = 0
+clearBtn.Parent           = main
+Instance.new("UICorner", clearBtn).CornerRadius = UDim.new(0, 8)
+
+saveBtn.MouseButton1Click:Connect(function()
+    local hrp = getHRP()
+    if hrp then
+        table.insert(positions, hrp.Position)
+        refreshList()
+    end
+end)
+
+clearBtn.MouseButton1Click:Connect(function()
+    positions  = {}
+    cycleIndex = 1
+    refreshList()
+end)
+
+-- ===== Toggle helper =====
+local function createToggle(text, yPos, onCallback, offCallback)
+    local btn = Instance.new("TextButton")
+    btn.Size             = UDim2.new(1, -20, 0, 36)
+    btn.Position         = UDim2.new(0, 10, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    btn.Text             = text .. "  [ OFF ]"
+    btn.TextColor3       = Color3.fromRGB(200, 200, 210)
+    btn.Font             = Enum.Font.GothamBold
+    btn.TextSize         = 14
+    btn.BorderSizePixel  = 0
+    btn.Parent           = main
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+    local on = false
+    btn.MouseButton1Click:Connect(function()
+        on = not on
+        if on then
+            btn.BackgroundColor3 = Color3.fromRGB(50, 140, 80)
+            btn.Text             = text .. "  [ ON ]"
+            if onCallback then onCallback() end
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+            btn.Text             = text .. "  [ OFF ]"
+            if offCallback then offCallback() end
+        end
+    end)
+    return btn
+end
+
+createToggle("Auto Teleport", 306,
+    function() autoTP = true; cycleIndex = 1 end,
+    function() autoTP = false end
+)
+createToggle("Auto Press  E", 348,
+    function() autoE = true end,
+    function() autoE = false end
+)
+
+-- ===== Delay input =====
+local delayLbl = Instance.new("TextLabel")
+delayLbl.Size              = UDim2.new(0, 120, 0, 30)
+delayLbl.Position          = UDim2.new(0, 12, 0, 400)
+delayLbl.BackgroundTransparency = 1
+delayLbl.Text              = "Delay (secondi):"
+delayLbl.TextColor3        = Color3.fromRGB(200, 200, 210)
+delayLbl.Font              = Enum.Font.Gotham
+delayLbl.TextSize          = 13
+delayLbl.TextXAlignment    = Enum.TextXAlignment.Left
+delayLbl.Parent            = main
+
+local delayBox = Instance.new("TextBox")
+delayBox.Size             = UDim2.new(0, 80, 0, 30)
+delayBox.Position         = UDim2.new(1, -92, 0, 400)
+delayBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+delayBox.Text             = "4.5"
+delayBox.TextColor3       = Color3.fromRGB(240, 240, 250)
+delayBox.Font             = Enum.Font.Gotham
+delayBox.TextSize         = 13
+delayBox.BorderSizePixel  = 0
+delayBox.Parent           = main
+Instance.new("UICorner", delayBox).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", delayBox).Color = Color3.fromRGB(80, 80, 95)
+
+delayBox.FocusLost:Connect(function()
+    local n = tonumber(delayBox.Text)
+    if n and n > 0 then
+        delayTime    = n
+        delayBox.Text = tostring(n)
+    else
+        delayBox.Text = tostring(delayTime)
+    end
+end)
+
+-- ===================== LOGICA ====================
+
+-- Loop Auto-Teleport
+task.spawn(function()
+    while true do
+        if autoTP and #positions >= 1 then
+            if cycleIndex > #positions then cycleIndex = 1 end
+            teleportTo(positions[cycleIndex])
+            cycleIndex = cycleIndex + 1
+            if cycleIndex > #positions then cycleIndex = 1 end
+            task.wait(delayTime)
+        else
+            task.wait(0.2)
+        end
+    end
+end)
+
+-- Rileva ProximityPrompt
+ProximityPromptService.PromptShown:Connect(function(prompt)
+    currentPrompt = prompt
+end)
+
+ProximityPromptService.PromptHidden:Connect(function(prompt)
+    if currentPrompt == prompt then
+        currentPrompt = nil
+    end
+end)
+
+-- Loop Auto-Press E
+task.spawn(function()
+    while true do
+        if autoE then
+            -- 1) tenta il trigger diretto del prompt
+            if currentPrompt then
+                if fireproximityprompt then
+                    pcall(fireproximityprompt, currentPrompt)
+                end
+            end
+            -- 2) simula anche la pressione del tasto E
+            pcall(function()
+                VirtualInputManager:SendKeyEvent(true,  Enum.KeyCode.E, false, game)
+                task.wait(0.05)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+            end)
+            task.wait(0.1)
+        else
+            task.wait(0.2)
+        end
+    end
+end)
+
+-- ===================== HOTKEY ====================
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        gui.Enabled = not gui.Enabled
+    end
+end)
+
+-- Init
+refreshList()
+print("[Case Farm Hub] Caricato. RightShift per mostrare/nascondere la GUI.")
