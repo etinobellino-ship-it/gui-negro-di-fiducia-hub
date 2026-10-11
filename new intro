@@ -1,5 +1,5 @@
 --========================================================--
---              NEGRO HUB ULTRA - V4 (ANTI-KICK)           --
+--              NEGRO HUB ULTRA - V5 (AUTO PARRY FIX)     --
 --========================================================--
 
 local CoreGui = game:GetService("CoreGui")
@@ -663,7 +663,7 @@ task.wait(0.7)
 tutorial:Destroy()
 
 --========================================================--
--- FUNZIONE: APRI HUB BLADE BALL (ANTI-KICK)
+-- FUNZIONE: APRI HUB BLADE BALL (AUTO PARRY CORRETTO)
 --========================================================--
 
 local function openBladeBallHub()
@@ -777,8 +777,7 @@ local function openBladeBallHub()
     secTitle.TextScaled = true
     secTitle.Font = Enum.Font.GothamBold
     secTitle.TextXAlignment = Enum.TextXAlignment.Left
-    secTitle.ZIndex = 116
-    secTitle.Parent = bbContent
+    secTitle.ZIndex = 116    secTitle.Parent = bbContent
 
     local secGradient = Instance.new("UIGradient")
     secGradient.Color = ColorSequence.new(Color3.fromRGB(255, 60, 80), Color3.fromRGB(200, 0, 255))
@@ -840,7 +839,7 @@ local function openBladeBallHub()
     infoLbl.Size = UDim2.new(1, 0, 0, 70)
     infoLbl.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
     infoLbl.BorderSizePixel = 0
-    infoLbl.Text = "L'auto parry rileva quando la palla ti sta puntando\ne para automaticamente quando è abbastanza vicina.\n\nVersione anti-kick attiva."
+    infoLbl.Text = "L'auto parry rileva quando la palla ti sta puntando\ne para automaticamente quando è abbastanza vicina.\n\nVersione corretta per Blade Ball."
     infoLbl.TextColor3 = Gray
     infoLbl.TextScaled = true
     infoLbl.Font = Enum.Font.Gotham
@@ -853,7 +852,8 @@ local function openBladeBallHub()
     infoC.Parent = infoLbl
 
     -- ========================================================
-    -- LOGICA AUTO PARRY (ANTI-KICK)
+    -- LOGICA AUTO PARRY CORRETTA
+    -- Basata sugli script funzionanti attuali
     -- ========================================================
 
     local Player = Players.LocalPlayer
@@ -862,6 +862,8 @@ local function openBladeBallHub()
 
     local autoParryActive = false
     local ballConnection = nil
+    local IsParried = false
+    local Cooldown = tick()
 
     local function VerifyBall(Ball)
         return typeof(Ball) == "Instance" and Ball:IsA("BasePart")
@@ -869,9 +871,9 @@ local function openBladeBallHub()
             and Ball:GetAttribute("realBall") == true
     end
 
-    local function IsTarget()
-        -- Il metodo più affidabile: la palla ha un attributo "target" col nome del giocatore
-        return (Player.Character and Player.Character:FindFirstChild("Highlight"))
+    local function IsTarget(Ball)
+        -- METODO CORRETTO: usa l'attributo target della palla
+        return Ball:GetAttribute("target") == Player.Name
     end
 
     local function Parry()
@@ -887,33 +889,39 @@ local function openBladeBallHub()
         ballConnection = Balls.ChildAdded:Connect(function(Ball)
             if not VerifyBall(Ball) then return end
 
-            local oldPosition = Ball.Position
-            local oldTick = tick()
+            IsParried = false
 
             local posConnection
             posConnection = Ball:GetPropertyChangedSignal("Position"):Connect(function()
                 if not autoParryActive then return end
+                if IsParried then return end
+                if tick() - Cooldown < 0.5 then return end
 
-                if IsTarget() then
-                    local distance = (Ball.Position - workspace.CurrentCamera.Focus.Position).Magnitude
-                    local velocity = (oldPosition - Ball.Position).Magnitude
+                -- Verifica se siamo il target
+                if IsTarget(Ball) then
+                    local char = Player.Character
+                    if not char then return end
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
 
-                    if velocity > 0 and distance > 0 then
-                        local timeToImpact = distance / velocity
+                    -- METODO CORRETTO: usa zoomies.VectorVelocity per la velocità
+                    local zoomies = Ball:FindFirstChild("zoomies")
+                    if not zoomies then return end
+                    local velocityPart = zoomies:FindFirstChild("VectorVelocity")
+                    if not velocityPart then return end
 
-                        -- Soglia con leggera variazione casuale per non essere robotico
-                        local threshold = 0.55 + (math.random(-5, 5) / 100)
+                    local speed = velocityPart.Value.Magnitude
+                    if speed < 1 then return end
 
-                        if timeToImpact <= threshold then
-                            Parry()
-                            task.wait(0.1) -- cooldown per evitare spam
-                        end
+                    local distance = (hrp.Position - Ball.Position).Magnitude
+                    local timeToImpact = distance / speed
+
+                    -- Soglia 0.55 come negli script funzionanti
+                    if timeToImpact <= 0.55 then
+                        Parry()
+                        IsParried = true
+                        Cooldown = tick()
                     end
-                end
-
-                if (tick() - oldTick) >= 1/60 then
-                    oldPosition = Ball.Position
-                    oldTick = tick()
                 end
             end)
 
@@ -983,11 +991,11 @@ local function openBladeBallHub()
     bbFrame.Size = UDim2.fromScale(0.01, 0.01)
     Tween(bbFrame, 0.6, {Size = UDim2.fromScale(0.45, 0.55)}, Enum.EasingStyle.Back)
 
-    print("[BLADE BALL HUB] Aperto (Versione Anti-Kick)")
+    print("[BLADE BALL HUB] Aperto (Auto Parry Corretto)")
 end
 
 --========================================================--
--- HUB PRINCIPALE (VUOTO)
+-- HUB PRINCIPALE
 --========================================================--
 
 local hub = Instance.new("Frame")
@@ -1056,7 +1064,7 @@ local subtitle = Instance.new("TextLabel")
 subtitle.Position = UDim2.fromScale(0.052, 0.61)
 subtitle.Size = UDim2.fromScale(0.6, 0.25)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "Premium Script Hub • V4"
+subtitle.Text = "Premium Script Hub • V5"
 subtitle.TextColor3 = Gray
 subtitle.TextScaled = true
 subtitle.Font = Enum.Font.GothamMedium
@@ -1509,4 +1517,4 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
-print("NEGRO HUB V4 (ANTI-KICK): LOADED SUCCESSFULLY ✅")
+print("NEGRO HUB V5 (AUTO PARRY FIX): LOADED SUCCESSFULLY ✅")
