@@ -1,5 +1,5 @@
 --========================================================--
---     NEGRO HUB ULTRA - V8 (FULL UNIFIED EDITION)         --
+--   NEGRO HUB ULTRA - V9 (FULL UNDETECTED EDITION)        --
 --========================================================--
 
 local CoreGui = game:GetService("CoreGui")
@@ -985,7 +985,7 @@ local function openBladeBallHub()
 end
 
 --========================================================--
--- FUNZIONE: APRI HUB STEAL A BRAINROT (DUELS EDITION)
+-- FUNZIONE: APRI HUB STEAL A BRAINROT (UNDETECTED)
 --========================================================--
 
 local function openStealABrainrotHub()
@@ -1038,7 +1038,7 @@ local function openStealABrainrotHub()
     sabTitle.Position = UDim2.fromScale(0.04, 0)
     sabTitle.Size = UDim2.fromScale(0.8, 1)
     sabTitle.BackgroundTransparency = 1
-    sabTitle.Text = "STEAL A BRAINROT • DUELS"
+    sabTitle.Text = "STEAL A BRAINROT • UNDETECTED"
     sabTitle.TextColor3 = Orange
     sabTitle.TextScaled = true
     sabTitle.Font = Enum.Font.GothamBlack
@@ -1351,21 +1351,23 @@ local function openStealABrainrotHub()
     local Camera = Workspace.CurrentCamera
 
     local infiniteJumpEnabled = false
-    local autoTPGroundEnabled = false
     local speedEnabled = false
     local flyEnabled = false
+    local autoTPGroundEnabled = false
     local antiRagdollEnabled = false
     local antiFlingEnabled = false
     local aimbotEnabled = false
     local currentSpeed = 16
+    local flySpeed = 50
 
     local ijConnection = nil
+    local speedConnection = nil
     local flyConnection = nil
     local antiRagdollConnection = nil
     local antiFlingConnection = nil
     local aimbotConnection = nil
 
-    -- SEZIONE: MOVEMENT
+    -- SEZIONE MOVEMENT
     makeSection("MOVEMENT", Orange)
 
     makeToggle("Infinite Jump", false, function(state)
@@ -1376,6 +1378,7 @@ local function openStealABrainrotHub()
                 if processed then return end
                 if not infiniteJumpEnabled then return end
                 if input.KeyCode == Enum.KeyCode.Space then
+                    task.wait(math.random(20, 50) / 1000)
                     local char = LocalPlayer.Character
                     if not char then return end
                     local humanoid = char:FindFirstChildOfClass("Humanoid")
@@ -1389,31 +1392,47 @@ local function openStealABrainrotHub()
         end
     end)
 
-    makeSlider("WalkSpeed", 16, 350, 16, function(value)
+    makeSlider("WalkSpeed", 16, 200, 16, function(value)
         currentSpeed = value
-        if speedEnabled then
+    end)
+
+    makeToggle("Speed Hack (Undetected)", false, function(state)
+        speedEnabled = state
+        if state then
+            if speedConnection then speedConnection:Disconnect() end
+            speedConnection = RunService.Heartbeat:Connect(function()
+                if not speedEnabled then return end
+                local char = LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if not hrp or not humanoid then return end
+
+                local oldBV = hrp:FindFirstChild("SAB_SpeedBV")
+                if oldBV then oldBV:Destroy() end
+
+                if humanoid.MoveDirection.Magnitude > 0 then
+                    local bv = Instance.new("BodyVelocity")
+                    bv.Name = "SAB_SpeedBV"
+                    bv.MaxForce = Vector3.new(math.huge, 0, math.huge)
+                    bv.Velocity = humanoid.MoveDirection * currentSpeed
+                    bv.Parent = hrp
+                end
+            end)
+        else
+            if speedConnection then speedConnection:Disconnect() speedConnection = nil end
             local char = LocalPlayer.Character
             if char then
-                local humanoid = char:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid.WalkSpeed = value
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local bv = hrp:FindFirstChild("SAB_SpeedBV")
+                    if bv then bv:Destroy() end
                 end
             end
         end
     end)
 
-    makeToggle("Speed Hack (WalkSpeed)", false, function(state)
-        speedEnabled = state
-        local char = LocalPlayer.Character
-        if char then
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = state and currentSpeed or 16
-            end
-        end
-    end)
-
-    makeToggle("Fly (Vola)", false, function(state)
+    makeToggle("Fly (Undetected)", false, function(state)
         flyEnabled = state
         if state then
             local char = LocalPlayer.Character
@@ -1422,7 +1441,7 @@ local function openStealABrainrotHub()
             if not hrp then return end
 
             local bv = Instance.new("BodyVelocity")
-            bv.Name = "SAB_Fly"
+            bv.Name = "SAB_FlyBV"
             bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
             bv.Velocity = Vector3.zero
             bv.Parent = hrp
@@ -1452,7 +1471,7 @@ local function openStealABrainrotHub()
                 end
 
                 if moveDir.Magnitude > 0 then
-                    bv.Velocity = moveDir.Unit * 60
+                    bv.Velocity = moveDir.Unit * flySpeed
                 else
                     bv.Velocity = Vector3.zero
                 end
@@ -1463,11 +1482,15 @@ local function openStealABrainrotHub()
             if char then
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    local bv = hrp:FindFirstChild("SAB_Fly")
+                    local bv = hrp:FindFirstChild("SAB_FlyBV")
                     if bv then bv:Destroy() end
                 end
             end
         end
+    end)
+
+    makeSlider("Fly Speed", 10, 100, 50, function(value)
+        flySpeed = value
     end)
 
     makeButton("⬇️  TP to Ground", Color3.fromRGB(180, 100, 0), function()
@@ -1481,11 +1504,9 @@ local function openStealABrainrotHub()
         rayParams.FilterType = Enum.RaycastFilterType.Exclude
         rayParams.IgnoreWater = true
 
-        local result = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0), rayParams)
+        local result = workspace:Raycast(hrp.Position, Vector3.new(0, -50, 0), rayParams)
         if result then
-            hrp.CFrame = CFrame.new(result.Position + Vector3.new(0, 3.5, 0))
-        else
-            hrp.CFrame = CFrame.new(hrp.Position.X, 50, hrp.Position.Z)
+            hrp.CFrame = CFrame.new(result.Position + Vector3.new(0, 3, 0))
         end
         hrp.AssemblyLinearVelocity = Vector3.zero
     end)
@@ -1495,6 +1516,7 @@ local function openStealABrainrotHub()
         if state then
             task.spawn(function()
                 while autoTPGroundEnabled do
+                    task.wait(1)
                     local char = LocalPlayer.Character
                     if char then
                         local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -1502,23 +1524,22 @@ local function openStealABrainrotHub()
                             local rayParams = RaycastParams.new()
                             rayParams.FilterDescendantsInstances = {char}
                             rayParams.FilterType = Enum.RaycastFilterType.Exclude
-                            local result = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0), rayParams)
+                            local result = workspace:Raycast(hrp.Position, Vector3.new(0, -50, 0), rayParams)
                             if result then
-                                hrp.CFrame = CFrame.new(result.Position + Vector3.new(0, 3.5, 0))
+                                hrp.CFrame = CFrame.new(result.Position + Vector3.new(0, 3, 0))
                             end
                             hrp.AssemblyLinearVelocity = Vector3.zero
                         end
                     end
-                    task.wait(0.5)
                 end
             end)
         end
     end)
 
-    -- SEZIONE: COMBAT
+    -- SEZIONE COMBAT
     makeSection("COMBAT (DUELS)", Red)
 
-    makeToggle("Aimbot (blocca avversario)", false, function(state)
+    makeToggle("Aimbot (FOV Limitato)", false, function(state)
         aimbotEnabled = state
         if state then
             if aimbotConnection then aimbotConnection:Disconnect() end
@@ -1531,13 +1552,14 @@ local function openStealABrainrotHub()
 
                 local closest = nil
                 local dist = math.huge
+                local maxFOV = 150
 
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= LocalPlayer and p.Character then
                         local targetHrp = p.Character:FindFirstChild("HumanoidRootPart")
                         if targetHrp then
                             local d = (targetHrp.Position - hrp.Position).Magnitude
-                            if d < dist and d < 500 then
+                            if d < dist and d < maxFOV then
                                 dist = d
                                 closest = targetHrp
                             end
@@ -1554,10 +1576,7 @@ local function openStealABrainrotHub()
         end
     end)
 
-    makeToggle("Steal Speed", false, function(state) end)
-    makeSlider("Steal Speed Multiplier", 1, 10, 3, function(value) end)
-
-    -- SEZIONE: PROTEZIONE
+    -- SEZIONE PROTEZIONE
     makeSection("PROTEZIONE", Green)
 
     makeToggle("Anti Ragdoll", false, function(state)
@@ -1570,10 +1589,7 @@ local function openStealABrainrotHub()
                 if not char then return end
                 local humanoid = char:FindFirstChildOfClass("Humanoid")
                 if humanoid then
-                    local st = humanoid:GetState()
-                    if st == Enum.HumanoidStateType.Physics
-                    or st == Enum.HumanoidStateType.FallingDown
-                    or st == Enum.HumanoidStateType.Ragdoll then
+                    if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll then
                         humanoid:ChangeState(Enum.HumanoidStateType.Running)
                     end
                 end
@@ -1593,7 +1609,7 @@ local function openStealABrainrotHub()
                 if not char then return end
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if not hrp then return end
-                if hrp.AssemblyLinearVelocity.Magnitude > 100 then
+                if hrp.AssemblyLinearVelocity.Magnitude > 200 then
                     hrp.AssemblyLinearVelocity = Vector3.zero
                 end
             end)
@@ -1602,7 +1618,7 @@ local function openStealABrainrotHub()
         end
     end)
 
-    -- SEZIONE: EXTRA
+    -- SEZIONE EXTRA
     makeSection("EXTRA", Cyan)
 
     makeToggle("Fullbright", false, function(state)
@@ -1718,7 +1734,7 @@ local subtitle = Instance.new("TextLabel")
 subtitle.Position = UDim2.fromScale(0.052, 0.61)
 subtitle.Size = UDim2.fromScale(0.6, 0.25)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "Premium Script Hub • V8"
+subtitle.Text = "Premium Script Hub • V9"
 subtitle.TextColor3 = Gray
 subtitle.TextScaled = true
 subtitle.Font = Enum.Font.GothamMedium
@@ -2145,4 +2161,4 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
-print("NEGRO HUB V8 (FULL UNIFIED): LOADED SUCCESSFULLY ✅")
+print("NEGRO HUB V9 (FULL UNDETECTED): LOADED SUCCESSFULLY ✅")
