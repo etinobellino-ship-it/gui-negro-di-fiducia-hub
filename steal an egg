@@ -1,0 +1,914 @@
+--========================================================--
+--         STEAL AN EGG - STANDALONE GUI (V1)              --
+--   ESP corretto: legge uova nel mondo + uova animali     --
+--========================================================--
+
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+
+--========================================================--
+-- CLEANUP
+--========================================================--
+
+pcall(function()
+    for _, v in ipairs(CoreGui:GetChildren()) do
+        if v.Name == "StealAnEggStandalone" then
+            v:Destroy()
+        end
+    end
+end)
+
+--========================================================--
+-- COLORI
+--========================================================--
+
+local Purple = Color3.fromRGB(180, 130, 255)
+local Cyan   = Color3.fromRGB(0, 255, 220)
+local Green  = Color3.fromRGB(0, 220, 130)
+local Red    = Color3.fromRGB(255, 45, 60)
+local Orange = Color3.fromRGB(255, 140, 0)
+local White  = Color3.fromRGB(245, 245, 255)
+local Gray   = Color3.fromRGB(135, 135, 155)
+
+--========================================================--
+-- TWEEN
+--========================================================--
+
+local function Tween(obj, time, props, style, direction)
+    local info = TweenInfo.new(
+        time or 0.4,
+        style or Enum.EasingStyle.Quint,
+        direction or Enum.EasingDirection.Out
+    )
+    local t = TweenService:Create(obj, info, props)
+    t:Play()
+    return t
+end
+
+--========================================================--
+-- SCREEN GUI
+--========================================================--
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "StealAnEggStandalone"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 999999
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = CoreGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Position = UDim2.fromScale(0.5, 0.5)
+mainFrame.Size = UDim2.fromScale(0.52, 0.78)
+mainFrame.BackgroundColor3 = Color3.fromRGB(10, 8, 20)
+mainFrame.BackgroundTransparency = 0.05
+mainFrame.BorderSizePixel = 0
+mainFrame.ZIndex = 100
+mainFrame.Parent = gui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 18)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Thickness = 2
+mainStroke.Color = Purple
+mainStroke.Transparency = 0.2
+mainStroke.Parent = mainFrame
+
+--========================================================--
+-- HEADER
+--========================================================--
+
+local header = Instance.new("Frame")
+header.Position = UDim2.fromScale(0.04, 0.025)
+header.Size = UDim2.fromScale(0.92, 0.1)
+header.BackgroundColor3 = Color3.fromRGB(25, 20, 40)
+header.BackgroundTransparency = 0.1
+header.BorderSizePixel = 0
+header.ZIndex = 110
+header.Parent = mainFrame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 12)
+headerCorner.Parent = header
+
+local title = Instance.new("TextLabel")
+title.Position = UDim2.fromScale(0.04, 0)
+title.Size = UDim2.fromScale(0.8, 1)
+title.BackgroundTransparency = 1
+title.Text = "STEAL AN EGG • UTILITY"
+title.TextColor3 = Purple
+title.TextScaled = true
+title.Font = Enum.Font.GothamBlack
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.ZIndex = 115
+title.Parent = header
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.AnchorPoint = Vector2.new(1, 0.5)
+closeBtn.Position = UDim2.fromScale(0.96, 0.5)
+closeBtn.Size = UDim2.fromScale(0.1, 0.7)
+closeBtn.BackgroundColor3 = Red
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "×"
+closeBtn.TextColor3 = White
+closeBtn.TextScaled = true
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.AutoButtonColor = false
+closeBtn.ZIndex = 120
+closeBtn.Parent = header
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+--========================================================--
+-- CONTENT
+--========================================================--
+
+local content = Instance.new("ScrollingFrame")
+content.Position = UDim2.fromScale(0.04, 0.14)
+content.Size = UDim2.fromScale(0.92, 0.83)
+content.BackgroundColor3 = Color3.fromRGB(8, 6, 16)
+content.BackgroundTransparency = 0.08
+content.BorderSizePixel = 0
+content.ScrollBarThickness = 4
+content.ScrollBarImageColor3 = Purple
+content.CanvasSize = UDim2.new(0, 0, 0, 0)
+content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+content.ZIndex = 110
+content.Parent = mainFrame
+
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 12)
+contentCorner.Parent = content
+
+local contentPad = Instance.new("UIPadding")
+contentPad.PaddingTop = UDim.new(0, 12)
+contentPad.PaddingBottom = UDim.new(0, 12)
+contentPad.PaddingLeft = UDim.new(0, 12)
+contentPad.PaddingRight = UDim.new(0, 12)
+contentPad.Parent = content
+
+local contentLayout = Instance.new("UIListLayout")
+contentLayout.Padding = UDim.new(0, 8)
+contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+contentLayout.Parent = content
+
+--========================================================--
+-- UTILITY
+--========================================================--
+
+local function makeSection(text, color)
+    local s = Instance.new("TextLabel")
+    s.Size = UDim2.new(1, 0, 0, 22)
+    s.BackgroundTransparency = 1
+    s.Text = text
+    s.TextColor3 = color
+    s.TextScaled = true
+    s.Font = Enum.Font.GothamBold
+    s.TextXAlignment = Enum.TextXAlignment.Left
+    s.ZIndex = 116
+    s.Parent = content
+
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new(color, Purple)
+    g.Parent = s
+
+    return s
+end
+
+local function makeToggle(name, default, callback)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 44)
+    row.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
+    row.BorderSizePixel = 0
+    row.ZIndex = 116
+    row.Parent = content
+
+    local rc = Instance.new("UICorner")
+    rc.CornerRadius = UDim.new(0, 10)
+    rc.Parent = row
+
+    local label = Instance.new("TextLabel")
+    label.Position = UDim2.fromScale(0.04, 0)
+    label.Size = UDim2.fromScale(0.65, 1)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = White
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamMedium
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 117
+    label.Parent = row
+
+    local tg = Instance.new("Frame")
+    tg.AnchorPoint = Vector2.new(1, 0.5)
+    tg.Position = UDim2.fromScale(0.96, 0.5)
+    tg.Size = UDim2.fromOffset(46, 24)
+    tg.BackgroundColor3 = default and Green or Color3.fromRGB(55, 55, 75)
+    tg.BorderSizePixel = 0
+    tg.ZIndex = 117
+    tg.Parent = row
+
+    local tc = Instance.new("UICorner")
+    tc.CornerRadius = UDim.new(1, 0)
+    tc.Parent = tg
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.fromOffset(18, 18)
+    knob.Position = default and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+    knob.BackgroundColor3 = White
+    knob.BorderSizePixel = 0
+    knob.ZIndex = 118
+    knob.Parent = tg
+
+    local kc = Instance.new("UICorner")
+    kc.CornerRadius = UDim.new(1, 0)
+    kc.Parent = knob
+
+    local state = default
+
+    local function toggle()
+        state = not state
+        if state then
+            Tween(tg, 0.2, {BackgroundColor3 = Green})
+            Tween(knob, 0.2, {Position = UDim2.new(1, -21, 0.5, -9)})
+        else
+            Tween(tg, 0.2, {BackgroundColor3 = Color3.fromRGB(55, 55, 75)})
+            Tween(knob, 0.2, {Position = UDim2.new(0, 3, 0.5, -9)})
+        end
+        if callback then callback(state) end
+    end
+
+    tg.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then toggle() end
+    end)
+
+    row.MouseEnter:Connect(function()
+        Tween(row, 0.15, {BackgroundColor3 = Color3.fromRGB(30, 30, 50)})
+    end)
+    row.MouseLeave:Connect(function()
+        Tween(row, 0.15, {BackgroundColor3 = Color3.fromRGB(22, 22, 36)})
+    end)
+
+    return row
+end
+
+local function makeButton(name, color, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, 0, 0, 42)
+    b.BackgroundColor3 = color
+    b.BorderSizePixel = 0
+    b.Text = name
+    b.TextColor3 = White
+    b.TextScaled = true
+    b.Font = Enum.Font.GothamBold
+    b.AutoButtonColor = false
+    b.ZIndex = 116
+    b.Parent = content
+
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(0, 10)
+    bc.Parent = b
+
+    b.MouseEnter:Connect(function()
+        Tween(b, 0.15, {BackgroundColor3 = Color3.fromRGB(
+            math.min(color.R * 255 + 40, 255),
+            math.min(color.G * 255 + 40, 255),
+            math.min(color.B * 255 + 40, 255)
+        )})
+    end)
+    b.MouseLeave:Connect(function()
+        Tween(b, 0.15, {BackgroundColor3 = color})
+    end)
+    b.MouseButton1Click:Connect(function()
+        if callback then callback() end
+    end)
+
+    return b
+end
+
+local function makeSlider(name, minV, maxV, defaultV, callback)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 56)
+    row.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
+    row.BorderSizePixel = 0
+    row.ZIndex = 116
+    row.Parent = content
+
+    local rc = Instance.new("UICorner")
+    rc.CornerRadius = UDim.new(0, 10)
+    rc.Parent = row
+
+    local label = Instance.new("TextLabel")
+    label.Position = UDim2.fromScale(0.04, 0.08)
+    label.Size = UDim2.fromScale(0.7, 0.4)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = White
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamMedium
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 117
+    label.Parent = row
+
+    local valLbl = Instance.new("TextLabel")
+    valLbl.AnchorPoint = Vector2.new(1, 0)
+    valLbl.Position = UDim2.fromScale(0.96, 0.08)
+    valLbl.Size = UDim2.fromScale(0.22, 0.4)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Text = tostring(defaultV)
+    valLbl.TextColor3 = Purple
+    valLbl.TextScaled = true
+    valLbl.Font = Enum.Font.GothamBold
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+    valLbl.ZIndex = 117
+    valLbl.Parent = row
+
+    local bg = Instance.new("Frame")
+    bg.Position = UDim2.fromScale(0.04, 0.68)
+    bg.Size = UDim2.fromScale(0.92, 0.16)
+    bg.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+    bg.BorderSizePixel = 0
+    bg.ZIndex = 117
+    bg.Parent = row
+
+    local bgc = Instance.new("UICorner")
+    bgc.CornerRadius = UDim.new(1, 0)
+    bgc.Parent = bg
+
+    local pct = (defaultV - minV) / (maxV - minV)
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.fromScale(pct, 1)
+    fill.BackgroundColor3 = Purple
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 118
+    fill.Parent = bg
+
+    local fc = Instance.new("UICorner")
+    fc.CornerRadius = UDim.new(1, 0)
+    fc.Parent = fill
+
+    local fg = Instance.new("UIGradient")
+    fg.Color = ColorSequence.new(Purple, Cyan)
+    fg.Parent = fill
+
+    local knob = Instance.new("Frame")
+    knob.AnchorPoint = Vector2.new(0.5, 0.5)
+    knob.Position = UDim2.new(pct, 0, 0.5, 0)
+    knob.Size = UDim2.fromOffset(16, 16)
+    knob.BackgroundColor3 = White
+    knob.BorderSizePixel = 0
+    knob.ZIndex = 119
+    knob.Parent = bg
+
+    local knc = Instance.new("UICorner")
+    knc.CornerRadius = UDim.new(1, 0)
+    knc.Parent = knob
+
+    local dragging = false
+    local value = defaultV
+
+    local function update(inputX)
+        local absPos = bg.AbsolutePosition.X
+        local absSize = bg.AbsoluteSize.X
+        local p = math.clamp((inputX - absPos) / absSize, 0, 1)
+        value = minV + (maxV - minV) * p
+        fill.Size = UDim2.fromScale(p, 1)
+        knob.Position = UDim2.new(p, 0, 0.5, 0)
+        valLbl.Text = string.format("%.1f", value)
+        if callback then callback(value) end
+    end
+
+    bg.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            update(UserInputService:GetMouseLocation().X)
+        end
+    end)
+    knob.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            update(UserInputService:GetMouseLocation().X)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    return row
+end
+
+--========================================================--
+-- LOGICA EGG (ESP CORRETTO CON SUPPORTO ANIMALI)
+--========================================================--
+
+local eggESPEnabled = false
+local eggAutoCollectEnabled = false
+local eggSpeedEnabled = false
+local eggNotifierEnabled = false
+local eggSpeedValue = 150
+
+local eggESPConnections = {}
+local eggAutoCollectConnection = nil
+local eggNotifierConnection = nil
+local eggSpeedConnection = nil
+
+--========================================================--
+-- GET ALL EGGS (CORRETTO: include uova mondo, pen, carried, dropped, animali)
+--========================================================--
+
+local function GetAllEggs()
+    local eggs = {}
+    local seen = {}
+
+    local function addEgg(obj, part, source)
+        if not obj or not part or seen[obj] then return end
+        seen[obj] = true
+        table.insert(eggs, {
+            object = obj,
+            part = part,
+            source = source or "world",
+        })
+    end
+
+    -- 1. Uova nel mondo (Workspace, cartelle comuni)
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") or obj:IsA("BasePart") then
+            local name = obj.Name:lower()
+            -- Pattern esteso: include uova, egg, uovo, lucky block, mystery, brainrot
+            if name:find("egg") or name:find("uovo") or name:find("lucky block")
+            or name:find("mystery") or name:find("brainrot egg") then
+                local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                if part then
+                    addEgg(obj, part, "world")
+                end
+            end
+        end
+    end
+
+    -- 2. Uova trasportate (carried) - cercate nella character del giocatore e degli altri
+    for _, player in ipairs(Players:GetPlayers()) do
+        local char = player.Character
+        if char then
+            for _, obj in ipairs(char:GetDescendants()) do
+                if obj:IsA("Model") or obj:IsA("BasePart") then
+                    local name = obj.Name:lower()
+                    if name:find("egg") or name:find("uovo") or name:find("carried")
+                    or name:find("held") then
+                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            addEgg(obj, part, "carried")
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- 3. Uova nel pen (recinto) del giocatore locale
+    local myPlot = Workspace:FindFirstChild(LocalPlayer.Name .. "_Plot")
+        or Workspace:FindFirstChild(LocalPlayer.Name .. "Plot")
+        or Workspace:FindFirstChild("Plot_" .. LocalPlayer.Name)
+    if myPlot then
+        for _, obj in ipairs(myPlot:GetDescendants()) do
+            if obj:IsA("Model") or obj:IsA("BasePart") then
+                local name = obj.Name:lower()
+                if name:find("egg") or name:find("uovo") or name:find("pen")
+                or name:find("placed") then
+                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                    if part then
+                        addEgg(obj, part, "pen")
+                    end
+                end
+            end
+        end
+    end
+
+    -- 4. Uova droppate (dropped) - in cartelle comuni
+    local eggFolders = {
+        Workspace:FindFirstChild("Eggs"),
+        Workspace:FindFirstChild("DroppedEggs"),
+        Workspace:FindFirstChild("EggFolder"),
+        Workspace:FindFirstChild("EggsFolder"),
+    }
+    for _, folder in ipairs(eggFolders) do
+        if folder then
+            for _, obj in ipairs(folder:GetDescendants()) do
+                if obj:IsA("Model") or obj:IsA("BasePart") then
+                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                    if part then
+                        addEgg(obj, part, "dropped")
+                    end
+                end
+            end
+        end
+    end
+
+    return eggs
+end
+
+--========================================================--
+-- GET NEAREST EGG
+--========================================================--
+
+local function GetNearestEgg()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local eggs = GetAllEggs()
+    if #eggs == 0 then return nil end
+
+    local nearest = nil
+    local nearestDist = math.huge
+
+    for _, egg in ipairs(eggs) do
+        local dist = (egg.part.Position - hrp.Position).Magnitude
+        if dist < nearestDist then
+            nearestDist = dist
+            nearest = egg
+        end
+    end
+
+    return nearest, nearestDist
+end
+
+--========================================================--
+-- MOVE TO EGG (con BodyVelocity)
+--========================================================--
+
+local function MoveToEgg(egg)
+    if not egg or not egg.part then return end
+
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local direction = (egg.part.Position - hrp.Position).Unit
+    local bv = hrp:FindFirstChild("Egg_MoveBV")
+    if bv then bv:Destroy() end
+
+    bv = Instance.new("BodyVelocity")
+    bv.Name = "Egg_MoveBV"
+    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+    bv.Velocity = direction * math.min(eggSpeedValue, 250)
+    bv.Parent = hrp
+
+    task.delay(0.15, function()
+        if bv and bv.Parent then bv:Destroy() end
+    end)
+end
+
+--========================================================--
+-- COLLECT EGG
+--========================================================--
+
+local function CollectEgg(egg)
+    if not egg or not egg.part then return end
+
+    local prompt = egg.part:FindFirstChildWhichIsA("ProximityPrompt")
+    if not prompt then
+        for _, desc in ipairs(egg.part:GetDescendants()) do
+            if desc:IsA("ProximityPrompt") then
+                prompt = desc
+                break
+            end
+        end
+    end
+
+    if prompt then
+        task.wait(math.random(50, 150) / 1000)
+        fireproximityprompt(prompt)
+    end
+end
+
+--========================================================--
+-- SEZIONE: EGG ESP
+--========================================================--
+
+makeSection("EGG ESP", Purple)
+
+makeToggle("Egg ESP (Uova + Animali)", false, function(state)
+    eggESPEnabled = state
+
+    if state then
+        local espFolder = Instance.new("Folder")
+        espFolder.Name = "EggESP_Folder"
+        espFolder.Parent = CoreGui
+
+        local function createESP(egg)
+            if not egg.part or not egg.part.Parent then return end
+
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "EggESP"
+            billboard.Adornee = egg.part
+            billboard.Size = UDim2.new(0, 140, 0, 50)
+            billboard.StudsOffset = Vector3.new(0, 3, 0)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = espFolder
+
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.fromScale(1, 0.55)
+            label.BackgroundTransparency = 0.3
+            label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            label.Text = "🥚 " .. egg.object.Name
+            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.TextScaled = true
+            label.Font = Enum.Font.GothamBold
+            label.Parent = billboard
+
+            local labelCorner = Instance.new("UICorner")
+            labelCorner.CornerRadius = UDim.new(0, 6)
+            labelCorner.Parent = label
+
+            local sourceLabel = Instance.new("TextLabel")
+            sourceLabel.Size = UDim2.fromScale(1, 0.25)
+            sourceLabel.Position = UDim2.fromScale(0, 0.55)
+            sourceLabel.BackgroundTransparency = 1
+            sourceLabel.TextColor3 = Color3.fromRGB(200, 180, 255)
+            sourceLabel.TextScaled = true
+            sourceLabel.Font = Enum.Font.Gotham
+            sourceLabel.Text = "[" .. egg.source:upper() .. "]"
+            sourceLabel.Parent = billboard
+
+            local distLabel = Instance.new("TextLabel")
+            distLabel.Size = UDim2.fromScale(1, 0.2)
+            distLabel.Position = UDim2.fromScale(0, 0.8)
+            distLabel.BackgroundTransparency = 1
+            distLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+            distLabel.TextScaled = true
+            distLabel.Font = Enum.Font.Gotham
+            distLabel.Parent = billboard
+
+            local updateConn
+            updateConn = RunService.RenderStepped:Connect(function()
+                if not eggESPEnabled or not egg.part or not egg.part.Parent then
+                    billboard:Destroy()
+                    if updateConn then updateConn:Disconnect() end
+                    return
+                end
+
+                local char = LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                local dist = (egg.part.Position - hrp.Position).Magnitude
+                distLabel.Text = string.format("[%.0f studs]", dist)
+
+                if dist < 50 then
+                    label.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+                elseif dist < 150 then
+                    label.BackgroundColor3 = Color3.fromRGB(100, 100, 0)
+                else
+                    label.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
+                end
+            end)
+
+            table.insert(eggESPConnections, updateConn)
+        end
+
+        -- Crea ESP per tutte le uova esistenti
+        for _, egg in ipairs(GetAllEggs()) do
+            createESP(egg)
+        end
+
+        -- Monitora nuove uova
+        local newEggConn = Workspace.DescendantAdded:Connect(function(obj)
+            if not eggESPEnabled then return end
+            task.wait(0.3)
+            if obj:IsA("Model") or obj:IsA("BasePart") then
+                local name = obj.Name:lower()
+                if name:find("egg") or name:find("uovo") or name:find("lucky block")
+                or name:find("mystery") or name:find("carried") or name:find("held") then
+                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                    if part then
+                        createESP({ object = obj, part = part, source = "world" })
+                    end
+                end
+            end
+        end)
+        table.insert(eggESPConnections, newEggConn)
+    else
+        for _, conn in ipairs(eggESPConnections) do
+            pcall(function() conn:Disconnect() end)
+        end
+        eggESPConnections = {}
+        local folder = CoreGui:FindFirstChild("EggESP_Folder")
+        if folder then folder:Destroy() end
+    end
+end)
+
+--========================================================--
+-- SEZIONE: AUTO COLLECT
+--========================================================--
+
+makeSection("AUTO COLLECT", Green)
+
+makeToggle("Auto Collect Egg", false, function(state)
+    eggAutoCollectEnabled = state
+    if state then
+        if eggAutoCollectConnection then eggAutoCollectConnection:Disconnect() end
+        eggAutoCollectConnection = RunService.Heartbeat:Connect(function()
+            if not eggAutoCollectEnabled then return end
+            local nearestEgg, dist = GetNearestEgg()
+            if nearestEgg and dist then
+                if dist < 10 then
+                    CollectEgg(nearestEgg)
+                elseif dist < 300 then
+                    MoveToEgg(nearestEgg)
+                end
+            end
+        end)
+    else
+        if eggAutoCollectConnection then
+            eggAutoCollectConnection:Disconnect()
+            eggAutoCollectConnection = nil
+        end
+    end
+end)
+
+makeButton("🎯 Vai all'Uovo più Vicino", Color3.fromRGB(130, 80, 200), function()
+    local nearestEgg, dist = GetNearestEgg()
+    if nearestEgg then
+        MoveToEgg(nearestEgg)
+        task.delay(0.5, function()
+            CollectEgg(nearestEgg)
+        end)
+        print("[Egg] Muovendosi verso: " .. nearestEgg.object.Name .. " [" .. nearestEgg.source .. "] (" .. math.floor(dist) .. " studs)")
+    else
+        print("[Egg] Nessun uovo trovato.")
+    end
+end)
+
+--========================================================--
+-- SEZIONE: EGG SPEED
+--========================================================--
+
+makeSection("EGG SPEED", Orange)
+
+makeSlider("Egg Speed", 100, 300, 150, function(value)
+    eggSpeedValue = value
+end)
+
+makeToggle("Egg Speed Boost", false, function(state)
+    eggSpeedEnabled = state
+    if state then
+        if eggSpeedConnection then eggSpeedConnection:Disconnect() end
+        eggSpeedConnection = RunService.Heartbeat:Connect(function()
+            if not eggSpeedEnabled then
+                if eggSpeedConnection then eggSpeedConnection:Disconnect() end
+                local c = LocalPlayer.Character
+                if c then
+                    local h = c:FindFirstChild("HumanoidRootPart")
+                    if h then
+                        local b = h:FindFirstChild("Egg_SpeedBV")
+                        if b then b:Destroy() end
+                    end
+                end
+                return
+            end
+
+            local c = LocalPlayer.Character
+            if not c then return end
+            local h = c:FindFirstChild("HumanoidRootPart")
+            local hum = c:FindFirstChildOfClass("Humanoid")
+            if not h or not hum then return end
+
+            if hum.MoveDirection.Magnitude > 0 then
+                local bv = h:FindFirstChild("Egg_SpeedBV")
+                if not bv then
+                    bv = Instance.new("BodyVelocity")
+                    bv.Name = "Egg_SpeedBV"
+                    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+                    bv.Parent = h
+                end
+                bv.Velocity = hum.MoveDirection * math.min(eggSpeedValue, 280)
+            else
+                local bv = h:FindFirstChild("Egg_SpeedBV")
+                if bv then bv.Velocity = Vector3.zero end
+            end
+        end)
+    else
+        if eggSpeedConnection then eggSpeedConnection:Disconnect() eggSpeedConnection = nil end
+        local c = LocalPlayer.Character
+        if c then
+            local h = c:FindFirstChild("HumanoidRootPart")
+            if h then
+                local b = h:FindFirstChild("Egg_SpeedBV")
+                if b then b:Destroy() end
+            end
+        end
+    end
+end)
+
+--========================================================--
+-- SEZIONE: NOTIFICHE & INFO
+--========================================================--
+
+makeSection("NOTIFICHE & INFO", Cyan)
+
+makeToggle("Egg Spawn Notifier", false, function(state)
+    eggNotifierEnabled = state
+    if state then
+        if eggNotifierConnection then eggNotifierConnection:Disconnect() end
+        eggNotifierConnection = Workspace.DescendantAdded:Connect(function(obj)
+            if not eggNotifierEnabled then return end
+            if obj:IsA("Model") or obj:IsA("BasePart") then
+                local name = obj.Name:lower()
+                if name:find("egg") or name:find("uovo") or name:find("lucky block") then
+                    pcall(function()
+                        game:GetService("StarterGui"):SetCore("SendNotification", {
+                            Title = "🥚 Uovo Spawnato!",
+                            Text = obj.Name .. " è apparso!",
+                            Duration = 3,
+                        })
+                    end)
+                    print("[Egg] Nuovo uovo: " .. obj.Name)
+                end
+            end
+        end)
+    else
+        if eggNotifierConnection then
+            eggNotifierConnection:Disconnect()
+            eggNotifierConnection = nil
+        end
+    end
+end)
+
+makeButton("📋 Mostra Lista Uova", Color3.fromRGB(80, 130, 200), function()
+    local eggs = GetAllEggs()
+    print("========== LISTA UOVA ==========")
+    if #eggs == 0 then
+        print("Nessuna uovo trovata.")
+    else
+        for i, egg in ipairs(eggs) do
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local dist = hrp and (egg.part.Position - hrp.Position).Magnitude or 0
+            print(string.format("[%d] %s | Fonte: %s | Distanza: %.0f studs", i, egg.object.Name, egg.source, dist))
+        end
+    end
+    print("================================")
+end)
+
+--========================================================--
+-- DRAG & DROP
+--========================================================--
+
+local dragging = false
+local dragStart, startPos
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+--========================================================--
+-- ENTRATA
+--========================================================--
+
+mainFrame.Size = UDim2.fromScale(0.01, 0.01)
+Tween(mainFrame, 0.6, {Size = UDim2.fromScale(0.52, 0.78)}, Enum.EasingStyle.Back)
+
+print("[STEAL AN EGG] GUI caricata con successo! ESP attivo su uova mondo, animali, pen e dropped.")
