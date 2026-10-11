@@ -1,5 +1,5 @@
 --========================================================--
---       NEGRO HUB ULTRA - V6 (BLADE BALL + SAB)           --
+--     NEGRO HUB ULTRA - V8 (FULL UNIFIED EDITION)         --
 --========================================================--
 
 local CoreGui = game:GetService("CoreGui")
@@ -8,6 +8,8 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
 
 --========================================================--
 -- CLEANUP
@@ -36,6 +38,7 @@ local Blue   = Color3.fromRGB(0, 190, 255)
 local Cyan   = Color3.fromRGB(0, 255, 220)
 local Red    = Color3.fromRGB(255, 45, 60)
 local Green  = Color3.fromRGB(0, 220, 130)
+local Orange = Color3.fromRGB(255, 140, 0)
 
 local White  = Color3.fromRGB(245, 245, 255)
 local Gray   = Color3.fromRGB(135, 135, 155)
@@ -47,6 +50,7 @@ local Gray   = Color3.fromRGB(135, 135, 155)
 local GAMES = {
     {name = "Blade Ball",         status = "ok",  id = "bladeball"},
     {name = "Steal a Brainrot",   status = "ok",  id = "sab"},
+    {name = "SAB Duels (PvP)",    status = "ok",  id = "sab"},
     {name = "Blox Fruits",        status = "soon"},
     {name = "Grow a Garden",      status = "soon"},
     {name = "Pet Simulator 99",   status = "soon"},
@@ -837,7 +841,7 @@ local function openBladeBallHub()
     infoLbl.Size = UDim2.new(1, 0, 0, 70)
     infoLbl.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
     infoLbl.BorderSizePixel = 0
-    infoLbl.Text = "L'auto parry rileva quando la palla ti sta puntando\ne para automaticamente quando è abbastanza vicina.\n\nVersione corretta per Blade Ball."
+    infoLbl.Text = "L'auto parry rileva quando la palla ti sta puntando\ne para automaticamente quando è abbastanza vicina."
     infoLbl.TextColor3 = Gray
     infoLbl.TextScaled = true
     infoLbl.Font = Enum.Font.Gotham
@@ -849,7 +853,7 @@ local function openBladeBallHub()
     infoC.CornerRadius = UDim.new(0, 10)
     infoC.Parent = infoLbl
 
-    -- LOGICA AUTO PARRY CORRETTA
+    -- LOGICA AUTO PARRY
     local Player = Players.LocalPlayer
     local Balls = workspace:WaitForChild("Balls", 9e9)
     local Remotes = ReplicatedStorage:WaitForChild("Remotes", 9e9)
@@ -981,7 +985,7 @@ local function openBladeBallHub()
 end
 
 --========================================================--
--- FUNZIONE: APRI HUB STEAL A BRAINROT
+-- FUNZIONE: APRI HUB STEAL A BRAINROT (DUELS EDITION)
 --========================================================--
 
 local function openStealABrainrotHub()
@@ -1000,7 +1004,7 @@ local function openStealABrainrotHub()
     sabFrame.Name = "SABFrame"
     sabFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     sabFrame.Position = UDim2.fromScale(0.5, 0.5)
-    sabFrame.Size = UDim2.fromScale(0.45, 0.55)
+    sabFrame.Size = UDim2.fromScale(0.52, 0.72)
     sabFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 16)
     sabFrame.BackgroundTransparency = 0.05
     sabFrame.BorderSizePixel = 0
@@ -1013,14 +1017,13 @@ local function openStealABrainrotHub()
 
     local sabStroke = Instance.new("UIStroke")
     sabStroke.Thickness = 2
-    sabStroke.Color = Color3.fromRGB(255, 180, 0)
+    sabStroke.Color = Orange
     sabStroke.Transparency = 0.2
     sabStroke.Parent = sabFrame
 
-    -- Header
     local sabHeader = Instance.new("Frame")
-    sabHeader.Position = UDim2.fromScale(0.04, 0.04)
-    sabHeader.Size = UDim2.fromScale(0.92, 0.16)
+    sabHeader.Position = UDim2.fromScale(0.04, 0.03)
+    sabHeader.Size = UDim2.fromScale(0.92, 0.12)
     sabHeader.BackgroundColor3 = Color3.fromRGB(20, 20, 34)
     sabHeader.BackgroundTransparency = 0.1
     sabHeader.BorderSizePixel = 0
@@ -1035,8 +1038,8 @@ local function openStealABrainrotHub()
     sabTitle.Position = UDim2.fromScale(0.04, 0)
     sabTitle.Size = UDim2.fromScale(0.8, 1)
     sabTitle.BackgroundTransparency = 1
-    sabTitle.Text = "STEAL A BRAINROT HUB"
-    sabTitle.TextColor3 = Color3.fromRGB(255, 180, 0)
+    sabTitle.Text = "STEAL A BRAINROT • DUELS"
+    sabTitle.TextColor3 = Orange
     sabTitle.TextScaled = true
     sabTitle.Font = Enum.Font.GothamBlack
     sabTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -1046,7 +1049,7 @@ local function openStealABrainrotHub()
     local sabClose = Instance.new("TextButton")
     sabClose.AnchorPoint = Vector2.new(1, 0.5)
     sabClose.Position = UDim2.fromScale(0.96, 0.5)
-    sabClose.Size = UDim2.fromScale(0.12, 0.7)
+    sabClose.Size = UDim2.fromScale(0.1, 0.7)
     sabClose.BackgroundColor3 = Red
     sabClose.BorderSizePixel = 0
     sabClose.Text = "×"
@@ -1065,13 +1068,16 @@ local function openStealABrainrotHub()
         sabGui:Destroy()
     end)
 
-    -- Content
-    local sabContent = Instance.new("Frame")
-    sabContent.Position = UDim2.fromScale(0.04, 0.22)
-    sabContent.Size = UDim2.fromScale(0.92, 0.74)
+    local sabContent = Instance.new("ScrollingFrame")
+    sabContent.Position = UDim2.fromScale(0.04, 0.17)
+    sabContent.Size = UDim2.fromScale(0.92, 0.8)
     sabContent.BackgroundColor3 = Color3.fromRGB(5, 5, 12)
     sabContent.BackgroundTransparency = 0.08
     sabContent.BorderSizePixel = 0
+    sabContent.ScrollBarThickness = 4
+    sabContent.ScrollBarImageColor3 = Orange
+    sabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+    sabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
     sabContent.ZIndex = 110
     sabContent.Parent = sabFrame
 
@@ -1086,283 +1092,385 @@ local function openStealABrainrotHub()
     sabPad.PaddingRight = UDim.new(0, 12)
     sabPad.Parent = sabContent
 
-    -- Sezione MOVEMENT
-    local sabSec = Instance.new("TextLabel")
-    sabSec.Size = UDim2.new(1, 0, 0, 22)
-    sabSec.BackgroundTransparency = 1
-    sabSec.Text = "MOVEMENT"
-    sabSec.TextColor3 = Color3.fromRGB(255, 200, 60)
-    sabSec.TextScaled = true
-    sabSec.Font = Enum.Font.GothamBold
-    sabSec.TextXAlignment = Enum.TextXAlignment.Left
-    sabSec.ZIndex = 116
-    sabSec.Parent = sabContent
+    local sabLayout = Instance.new("UIListLayout")
+    sabLayout.Padding = UDim.new(0, 8)
+    sabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    sabLayout.Parent = sabContent
 
-    local sabSecGrad = Instance.new("UIGradient")
-    sabSecGrad.Color = ColorSequence.new(Color3.fromRGB(255, 200, 60), Color3.fromRGB(255, 80, 0))
-    sabSecGrad.Parent = sabSec
+    -- UTILITY
+    local function makeSection(text, color)
+        local s = Instance.new("TextLabel")
+        s.Size = UDim2.new(1, 0, 0, 22)
+        s.BackgroundTransparency = 1
+        s.Text = text
+        s.TextColor3 = color
+        s.TextScaled = true
+        s.Font = Enum.Font.GothamBold
+        s.TextXAlignment = Enum.TextXAlignment.Left
+        s.ZIndex = 116
+        s.Parent = sabContent
 
-    -- Toggle Infinite Jump
-    local ijRow = Instance.new("Frame")
-    ijRow.Position = UDim2.new(0, 0, 0, 32)
-    ijRow.Size = UDim2.new(1, 0, 0, 44)
-    ijRow.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
-    ijRow.BorderSizePixel = 0
-    ijRow.ZIndex = 116
-    ijRow.Parent = sabContent
+        local g = Instance.new("UIGradient")
+        g.Color = ColorSequence.new(color, Purple)
+        g.Parent = s
 
-    local ijRC = Instance.new("UICorner")
-    ijRC.CornerRadius = UDim.new(0, 10)
-    ijRC.Parent = ijRow
+        return s
+    end
 
-    local ijLabel = Instance.new("TextLabel")
-    ijLabel.Position = UDim2.fromScale(0.04, 0)
-    ijLabel.Size = UDim2.fromScale(0.65, 1)
-    ijLabel.BackgroundTransparency = 1
-    ijLabel.Text = "Infinite Jump"
-    ijLabel.TextColor3 = White
-    ijLabel.TextScaled = true
-    ijLabel.Font = Enum.Font.GothamMedium
-    ijLabel.TextXAlignment = Enum.TextXAlignment.Left
-    ijLabel.ZIndex = 117
-    ijLabel.Parent = ijRow
+    local function makeToggle(name, default, callback)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 44)
+        row.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
+        row.BorderSizePixel = 0
+        row.ZIndex = 116
+        row.Parent = sabContent
 
-    local ijToggle = Instance.new("Frame")
-    ijToggle.AnchorPoint = Vector2.new(1, 0.5)
-    ijToggle.Position = UDim2.fromScale(0.96, 0.5)
-    ijToggle.Size = UDim2.fromOffset(46, 24)
-    ijToggle.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-    ijToggle.BorderSizePixel = 0
-    ijToggle.ZIndex = 117
-    ijToggle.Parent = ijRow
+        local rc = Instance.new("UICorner")
+        rc.CornerRadius = UDim.new(0, 10)
+        rc.Parent = row
 
-    local ijTC = Instance.new("UICorner")
-    ijTC.CornerRadius = UDim.new(1, 0)
-    ijTC.Parent = ijToggle
+        local label = Instance.new("TextLabel")
+        label.Position = UDim2.fromScale(0.04, 0)
+        label.Size = UDim2.fromScale(0.65, 1)
+        label.BackgroundTransparency = 1
+        label.Text = name
+        label.TextColor3 = White
+        label.TextScaled = true
+        label.Font = Enum.Font.GothamMedium
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.ZIndex = 117
+        label.Parent = row
 
-    local ijKnob = Instance.new("Frame")
-    ijKnob.Size = UDim2.fromOffset(18, 18)
-    ijKnob.Position = UDim2.new(0, 3, 0.5, -9)
-    ijKnob.BackgroundColor3 = White
-    ijKnob.BorderSizePixel = 0
-    ijKnob.ZIndex = 118
-    ijKnob.Parent = ijToggle
+        local tg = Instance.new("Frame")
+        tg.AnchorPoint = Vector2.new(1, 0.5)
+        tg.Position = UDim2.fromScale(0.96, 0.5)
+        tg.Size = UDim2.fromOffset(46, 24)
+        tg.BackgroundColor3 = default and Green or Color3.fromRGB(55, 55, 75)
+        tg.BorderSizePixel = 0
+        tg.ZIndex = 117
+        tg.Parent = row
 
-    local ijKC = Instance.new("UICorner")
-    ijKC.CornerRadius = UDim.new(1, 0)
-    ijKC.Parent = ijKnob
+        local tc = Instance.new("UICorner")
+        tc.CornerRadius = UDim.new(1, 0)
+        tc.Parent = tg
 
-    -- Bottone TP to Ground
-    local tpBtn = Instance.new("TextButton")
-    tpBtn.Position = UDim2.new(0, 0, 0, 84)
-    tpBtn.Size = UDim2.new(1, 0, 0, 42)
-    tpBtn.BackgroundColor3 = Color3.fromRGB(180, 100, 0)
-    tpBtn.BorderSizePixel = 0
-    tpBtn.Text = "⬇️  TP to Ground"
-    tpBtn.TextColor3 = White
-    tpBtn.TextScaled = true
-    tpBtn.Font = Enum.Font.GothamBold
-    tpBtn.AutoButtonColor = false
-    tpBtn.ZIndex = 116
-    tpBtn.Parent = sabContent
+        local knob = Instance.new("Frame")
+        knob.Size = UDim2.fromOffset(18, 18)
+        knob.Position = default and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+        knob.BackgroundColor3 = White
+        knob.BorderSizePixel = 0
+        knob.ZIndex = 118
+        knob.Parent = tg
 
-    local tpBC = Instance.new("UICorner")
-    tpBC.CornerRadius = UDim.new(0, 10)
-    tpBC.Parent = tpBtn
+        local kc = Instance.new("UICorner")
+        kc.CornerRadius = UDim.new(1, 0)
+        kc.Parent = knob
 
-    local tpBS = Instance.new("UIStroke")
-    tpBS.Color = Color3.fromRGB(255, 200, 60)
-    tpBS.Thickness = 1
-    tpBS.Transparency = 0.4
-    tpBS.Parent = tpBtn
+        local state = default
 
-    -- Toggle Auto TP
-    local atpRow = Instance.new("Frame")
-    atpRow.Position = UDim2.new(0, 0, 0, 134)
-    atpRow.Size = UDim2.new(1, 0, 0, 44)
-    atpRow.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
-    atpRow.BorderSizePixel = 0
-    atpRow.ZIndex = 116
-    atpRow.Parent = sabContent
+        local function toggle()
+            state = not state
+            if state then
+                Tween(tg, 0.2, {BackgroundColor3 = Green})
+                Tween(knob, 0.2, {Position = UDim2.new(1, -21, 0.5, -9)})
+            else
+                Tween(tg, 0.2, {BackgroundColor3 = Color3.fromRGB(55, 55, 75)})
+                Tween(knob, 0.2, {Position = UDim2.new(0, 3, 0.5, -9)})
+            end
+            if callback then callback(state) end
+        end
 
-    local atpRC = Instance.new("UICorner")
-    atpRC.CornerRadius = UDim.new(0, 10)
-    atpRC.Parent = atpRow
+        tg.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 then toggle() end
+        end)
 
-    local atpLabel = Instance.new("TextLabel")
-    atpLabel.Position = UDim2.fromScale(0.04, 0)
-    atpLabel.Size = UDim2.fromScale(0.65, 1)
-    atpLabel.BackgroundTransparency = 1
-    atpLabel.Text = "Auto TP to Ground"
-    atpLabel.TextColor3 = White
-    atpLabel.TextScaled = true
-    atpLabel.Font = Enum.Font.GothamMedium
-    atpLabel.TextXAlignment = Enum.TextXAlignment.Left
-    atpLabel.ZIndex = 117
-    atpLabel.Parent = atpRow
+        row.MouseEnter:Connect(function()
+            Tween(row, 0.15, {BackgroundColor3 = Color3.fromRGB(30, 30, 50)})
+        end)
+        row.MouseLeave:Connect(function()
+            Tween(row, 0.15, {BackgroundColor3 = Color3.fromRGB(22, 22, 36)})
+        end)
 
-    local atpToggle = Instance.new("Frame")
-    atpToggle.AnchorPoint = Vector2.new(1, 0.5)
-    atpToggle.Position = UDim2.fromScale(0.96, 0.5)
-    atpToggle.Size = UDim2.fromOffset(46, 24)
-    atpToggle.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-    atpToggle.BorderSizePixel = 0
-    atpToggle.ZIndex = 117
-    atpToggle.Parent = atpRow
+        return row
+    end
 
-    local atpTC = Instance.new("UICorner")
-    atpTC.CornerRadius = UDim.new(1, 0)
-    atpTC.Parent = atpToggle
+    local function makeButton(name, color, callback)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(1, 0, 0, 42)
+        b.BackgroundColor3 = color
+        b.BorderSizePixel = 0
+        b.Text = name
+        b.TextColor3 = White
+        b.TextScaled = true
+        b.Font = Enum.Font.GothamBold
+        b.AutoButtonColor = false
+        b.ZIndex = 116
+        b.Parent = sabContent
 
-    local atpKnob = Instance.new("Frame")
-    atpKnob.Size = UDim2.fromOffset(18, 18)
-    atpKnob.Position = UDim2.new(0, 3, 0.5, -9)
-    atpKnob.BackgroundColor3 = White
-    atpKnob.BorderSizePixel = 0
-    atpKnob.ZIndex = 118
-    atpKnob.Parent = atpToggle
+        local bc = Instance.new("UICorner")
+        bc.CornerRadius = UDim.new(0, 10)
+        bc.Parent = b
 
-    local atpKC = Instance.new("UICorner")
-    atpKC.CornerRadius = UDim.new(1, 0)
-    atpKC.Parent = atpKnob
+        b.MouseEnter:Connect(function()
+            Tween(b, 0.15, {BackgroundColor3 = Color3.fromRGB(
+                math.min(color.R * 255 + 40, 255),
+                math.min(color.G * 255 + 40, 255),
+                math.min(color.B * 255 + 40, 255)
+            )})
+        end)
+        b.MouseLeave:Connect(function()
+            Tween(b, 0.15, {BackgroundColor3 = color})
+        end)
+        b.MouseButton1Click:Connect(function()
+            if callback then callback() end
+        end)
 
-    -- Slider WalkSpeed
-    local wsRow = Instance.new("Frame")
-    wsRow.Position = UDim2.new(0, 0, 0, 184)
-    wsRow.Size = UDim2.new(1, 0, 0, 56)
-    wsRow.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
-    wsRow.BorderSizePixel = 0
-    wsRow.ZIndex = 116
-    wsRow.Parent = sabContent
+        return b
+    end
 
-    local wsRC = Instance.new("UICorner")
-    wsRC.CornerRadius = UDim.new(0, 10)
-    wsRC.Parent = wsRow
+    local function makeSlider(name, minV, maxV, defaultV, callback)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 56)
+        row.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
+        row.BorderSizePixel = 0
+        row.ZIndex = 116
+        row.Parent = sabContent
 
-    local wsLabel = Instance.new("TextLabel")
-    wsLabel.Position = UDim2.fromScale(0.04, 0.08)
-    wsLabel.Size = UDim2.fromScale(0.7, 0.4)
-    wsLabel.BackgroundTransparency = 1
-    wsLabel.Text = "WalkSpeed"
-    wsLabel.TextColor3 = White
-    wsLabel.TextScaled = true
-    wsLabel.Font = Enum.Font.GothamMedium
-    wsLabel.TextXAlignment = Enum.TextXAlignment.Left
-    wsLabel.ZIndex = 117
-    wsLabel.Parent = wsRow
+        local rc = Instance.new("UICorner")
+        rc.CornerRadius = UDim.new(0, 10)
+        rc.Parent = row
 
-    local wsVal = Instance.new("TextLabel")
-    wsVal.AnchorPoint = Vector2.new(1, 0)
-    wsVal.Position = UDim2.fromScale(0.96, 0.08)
-    wsVal.Size = UDim2.fromScale(0.22, 0.4)
-    wsVal.BackgroundTransparency = 1
-    wsVal.Text = "16"
-    wsVal.TextColor3 = Color3.fromRGB(255, 200, 60)
-    wsVal.TextScaled = true
-    wsVal.Font = Enum.Font.GothamBold
-    wsVal.TextXAlignment = Enum.TextXAlignment.Right
-    wsVal.ZIndex = 117
-    wsVal.Parent = wsRow
+        local label = Instance.new("TextLabel")
+        label.Position = UDim2.fromScale(0.04, 0.08)
+        label.Size = UDim2.fromScale(0.7, 0.4)
+        label.BackgroundTransparency = 1
+        label.Text = name
+        label.TextColor3 = White
+        label.TextScaled = true
+        label.Font = Enum.Font.GothamMedium
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.ZIndex = 117
+        label.Parent = row
 
-    local wsBg = Instance.new("Frame")
-    wsBg.Position = UDim2.fromScale(0.04, 0.68)
-    wsBg.Size = UDim2.fromScale(0.92, 0.16)
-    wsBg.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    wsBg.BorderSizePixel = 0
-    wsBg.ZIndex = 117
-    wsBg.Parent = wsRow
+        local valLbl = Instance.new("TextLabel")
+        valLbl.AnchorPoint = Vector2.new(1, 0)
+        valLbl.Position = UDim2.fromScale(0.96, 0.08)
+        valLbl.Size = UDim2.fromScale(0.22, 0.4)
+        valLbl.BackgroundTransparency = 1
+        valLbl.Text = tostring(defaultV)
+        valLbl.TextColor3 = Orange
+        valLbl.TextScaled = true
+        valLbl.Font = Enum.Font.GothamBold
+        valLbl.TextXAlignment = Enum.TextXAlignment.Right
+        valLbl.ZIndex = 117
+        valLbl.Parent = row
 
-    local wsBgC = Instance.new("UICorner")
-    wsBgC.CornerRadius = UDim.new(1, 0)
-    wsBgC.Parent = wsBg
+        local bg = Instance.new("Frame")
+        bg.Position = UDim2.fromScale(0.04, 0.68)
+        bg.Size = UDim2.fromScale(0.92, 0.16)
+        bg.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+        bg.BorderSizePixel = 0
+        bg.ZIndex = 117
+        bg.Parent = row
 
-    local wsFill = Instance.new("Frame")
-    wsFill.Size = UDim2.fromScale(0, 1)
-    wsFill.BackgroundColor3 = Color3.fromRGB(255, 180, 0)
-    wsFill.BorderSizePixel = 0
-    wsFill.ZIndex = 118
-    wsFill.Parent = wsBg
+        local bgc = Instance.new("UICorner")
+        bgc.CornerRadius = UDim.new(1, 0)
+        bgc.Parent = bg
 
-    local wsFillC = Instance.new("UICorner")
-    wsFillC.CornerRadius = UDim.new(1, 0)
-    wsFillC.Parent = wsFill
+        local pct = (defaultV - minV) / (maxV - minV)
 
-    local wsFillG = Instance.new("UIGradient")
-    wsFillG.Color = ColorSequence.new(Color3.fromRGB(255, 200, 60), Color3.fromRGB(255, 80, 0))
-    wsFillG.Parent = wsFill
+        local fill = Instance.new("Frame")
+        fill.Size = UDim2.fromScale(pct, 1)
+        fill.BackgroundColor3 = Orange
+        fill.BorderSizePixel = 0
+        fill.ZIndex = 118
+        fill.Parent = bg
 
-    local wsKnob = Instance.new("Frame")
-    wsKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-    wsKnob.Position = UDim2.new(0, 0, 0.5, 0)
-    wsKnob.Size = UDim2.fromOffset(16, 16)
-    wsKnob.BackgroundColor3 = White
-    wsKnob.BorderSizePixel = 0
-    wsKnob.ZIndex = 119
-    wsKnob.Parent = wsBg
+        local fc = Instance.new("UICorner")
+        fc.CornerRadius = UDim.new(1, 0)
+        fc.Parent = fill
 
-    local wsKnobC = Instance.new("UICorner")
-    wsKnobC.CornerRadius = UDim.new(1, 0)
-    wsKnobC.Parent = wsKnob
+        local fg = Instance.new("UIGradient")
+        fg.Color = ColorSequence.new(Orange, Red)
+        fg.Parent = fill
 
-    -- ========================================================
-    -- LOGICA SAB
-    -- ========================================================
+        local knob = Instance.new("Frame")
+        knob.AnchorPoint = Vector2.new(0.5, 0.5)
+        knob.Position = UDim2.new(pct, 0, 0.5, 0)
+        knob.Size = UDim2.fromOffset(16, 16)
+        knob.BackgroundColor3 = White
+        knob.BorderSizePixel = 0
+        knob.ZIndex = 119
+        knob.Parent = bg
 
-    local LocalPlayer = Players.LocalPlayer
-    local infiniteJumpEnabled = false
-    local autoTPGroundEnabled = false
-    local ijConnection = nil
+        local knc = Instance.new("UICorner")
+        knc.CornerRadius = UDim.new(1, 0)
+        knc.Parent = knob
 
-    -- INFINITE JUMP
-    local function startInfiniteJump()
-        if ijConnection then ijConnection:Disconnect() end
-        ijConnection = UserInputService.InputBegan:Connect(function(input, processed)
-            if processed then return end
-            if not infiniteJumpEnabled then return end
-            if input.KeyCode == Enum.KeyCode.Space then
-                local char = LocalPlayer.Character
-                if not char then return end
-                local humanoid = char:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                end
+        local dragging = false
+        local value = defaultV
+
+        local function update(inputX)
+            local absPos = bg.AbsolutePosition.X
+            local absSize = bg.AbsoluteSize.X
+            local p = math.clamp((inputX - absPos) / absSize, 0, 1)
+            value = minV + (maxV - minV) * p
+            fill.Size = UDim2.fromScale(p, 1)
+            knob.Position = UDim2.new(p, 0, 0.5, 0)
+            valLbl.Text = string.format("%.0f", value)
+            if callback then callback(value) end
+        end
+
+        bg.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                update(UserInputService:GetMouseLocation().X)
             end
         end)
+        knob.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(i)
+            if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+                update(UserInputService:GetMouseLocation().X)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+
+        return row
     end
 
-    local function stopInfiniteJump()
-        if ijConnection then
-            ijConnection:Disconnect()
-            ijConnection = nil
-        end
-    end
+    -- LOGICA SAB
+    local LocalPlayer = Players.LocalPlayer
+    local Camera = Workspace.CurrentCamera
 
-    local function toggleInfiniteJump()
-        infiniteJumpEnabled = not infiniteJumpEnabled
-        if infiniteJumpEnabled then
-            Tween(ijToggle, 0.2, {BackgroundColor3 = Green})
-            Tween(ijKnob, 0.2, {Position = UDim2.new(1, -21, 0.5, -9)})
-            startInfiniteJump()
+    local infiniteJumpEnabled = false
+    local autoTPGroundEnabled = false
+    local speedEnabled = false
+    local flyEnabled = false
+    local antiRagdollEnabled = false
+    local antiFlingEnabled = false
+    local aimbotEnabled = false
+    local currentSpeed = 16
+
+    local ijConnection = nil
+    local flyConnection = nil
+    local antiRagdollConnection = nil
+    local antiFlingConnection = nil
+    local aimbotConnection = nil
+
+    -- SEZIONE: MOVEMENT
+    makeSection("MOVEMENT", Orange)
+
+    makeToggle("Infinite Jump", false, function(state)
+        infiniteJumpEnabled = state
+        if state then
+            if ijConnection then ijConnection:Disconnect() end
+            ijConnection = UserInputService.InputBegan:Connect(function(input, processed)
+                if processed then return end
+                if not infiniteJumpEnabled then return end
+                if input.KeyCode == Enum.KeyCode.Space then
+                    local char = LocalPlayer.Character
+                    if not char then return end
+                    local humanoid = char:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                end
+            end)
         else
-            Tween(ijToggle, 0.2, {BackgroundColor3 = Color3.fromRGB(55, 55, 75)})
-            Tween(ijKnob, 0.2, {Position = UDim2.new(0, 3, 0.5, -9)})
-            stopInfiniteJump()
+            if ijConnection then ijConnection:Disconnect() ijConnection = nil end
         end
-    end
-
-    ijToggle.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then toggleInfiniteJump() end
     end)
 
-    ijRow.MouseEnter:Connect(function()
-        Tween(ijRow, 0.15, {BackgroundColor3 = Color3.fromRGB(30, 30, 50)})
-    end)
-    ijRow.MouseLeave:Connect(function()
-        Tween(ijRow, 0.15, {BackgroundColor3 = Color3.fromRGB(22, 22, 36)})
+    makeSlider("WalkSpeed", 16, 350, 16, function(value)
+        currentSpeed = value
+        if speedEnabled then
+            local char = LocalPlayer.Character
+            if char then
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = value
+                end
+            end
+        end
     end)
 
-    -- TP TO GROUND
-    local function TPToGround()
+    makeToggle("Speed Hack (WalkSpeed)", false, function(state)
+        speedEnabled = state
+        local char = LocalPlayer.Character
+        if char then
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = state and currentSpeed or 16
+            end
+        end
+    end)
+
+    makeToggle("Fly (Vola)", false, function(state)
+        flyEnabled = state
+        if state then
+            local char = LocalPlayer.Character
+            if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "SAB_Fly"
+            bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bv.Velocity = Vector3.zero
+            bv.Parent = hrp
+
+            flyConnection = RunService.RenderStepped:Connect(function()
+                if not flyEnabled then return end
+                local cam = Workspace.CurrentCamera
+                local moveDir = Vector3.zero
+
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDir = moveDir + cam.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDir = moveDir - cam.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDir = moveDir - cam.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDir = moveDir + cam.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDir = moveDir + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                    moveDir = moveDir - Vector3.new(0, 1, 0)
+                end
+
+                if moveDir.Magnitude > 0 then
+                    bv.Velocity = moveDir.Unit * 60
+                else
+                    bv.Velocity = Vector3.zero
+                end
+            end)
+        else
+            if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+            local char = LocalPlayer.Character
+            if char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local bv = hrp:FindFirstChild("SAB_Fly")
+                    if bv then bv:Destroy() end
+                end
+            end
+        end
+    end)
+
+    makeButton("⬇️  TP to Ground", Color3.fromRGB(180, 100, 0), function()
         local char = LocalPlayer.Character
         if not char then return end
         local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -1374,101 +1482,144 @@ local function openStealABrainrotHub()
         rayParams.IgnoreWater = true
 
         local result = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0), rayParams)
-
         if result then
             hrp.CFrame = CFrame.new(result.Position + Vector3.new(0, 3.5, 0))
-            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
         else
             hrp.CFrame = CFrame.new(hrp.Position.X, 50, hrp.Position.Z)
-            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
         end
-    end
-
-    tpBtn.MouseButton1Click:Connect(function()
-        TPToGround()
-    end)
-    tpBtn.MouseEnter:Connect(function()
-        Tween(tpBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(220, 130, 0)})
-    end)
-    tpBtn.MouseLeave:Connect(function()
-        Tween(tpBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(180, 100, 0)})
+        hrp.AssemblyLinearVelocity = Vector3.zero
     end)
 
-    -- AUTO TP
-    local autoTPConnection = nil
-    local function toggleAutoTP()
-        autoTPGroundEnabled = not autoTPGroundEnabled
-        if autoTPGroundEnabled then
-            Tween(atpToggle, 0.2, {BackgroundColor3 = Green})
-            Tween(atpKnob, 0.2, {Position = UDim2.new(1, -21, 0.5, -9)})
-            autoTPConnection = task.spawn(function()
+    makeToggle("Auto TP to Ground", false, function(state)
+        autoTPGroundEnabled = state
+        if state then
+            task.spawn(function()
                 while autoTPGroundEnabled do
-                    TPToGround()
+                    local char = LocalPlayer.Character
+                    if char then
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            local rayParams = RaycastParams.new()
+                            rayParams.FilterDescendantsInstances = {char}
+                            rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                            local result = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0), rayParams)
+                            if result then
+                                hrp.CFrame = CFrame.new(result.Position + Vector3.new(0, 3.5, 0))
+                            end
+                            hrp.AssemblyLinearVelocity = Vector3.zero
+                        end
+                    end
                     task.wait(0.5)
                 end
             end)
+        end
+    end)
+
+    -- SEZIONE: COMBAT
+    makeSection("COMBAT (DUELS)", Red)
+
+    makeToggle("Aimbot (blocca avversario)", false, function(state)
+        aimbotEnabled = state
+        if state then
+            if aimbotConnection then aimbotConnection:Disconnect() end
+            aimbotConnection = RunService.RenderStepped:Connect(function()
+                if not aimbotEnabled then return end
+                local char = LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                local closest = nil
+                local dist = math.huge
+
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= LocalPlayer and p.Character then
+                        local targetHrp = p.Character:FindFirstChild("HumanoidRootPart")
+                        if targetHrp then
+                            local d = (targetHrp.Position - hrp.Position).Magnitude
+                            if d < dist and d < 500 then
+                                dist = d
+                                closest = targetHrp
+                            end
+                        end
+                    end
+                end
+
+                if closest then
+                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, closest.Position)
+                end
+            end)
         else
-            Tween(atpToggle, 0.2, {BackgroundColor3 = Color3.fromRGB(55, 55, 75)})
-            Tween(atpKnob, 0.2, {Position = UDim2.new(0, 3, 0.5, -9)})
-        end
-    end
-
-    atpToggle.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then toggleAutoTP() end
-    end)
-
-    atpRow.MouseEnter:Connect(function()
-        Tween(atpRow, 0.15, {BackgroundColor3 = Color3.fromRGB(30, 30, 50)})
-    end)
-    atpRow.MouseLeave:Connect(function()
-        Tween(atpRow, 0.15, {BackgroundColor3 = Color3.fromRGB(22, 22, 36)})
-    end)
-
-    -- WALKSPEED SLIDER
-    local wsDragging = false
-    local wsValue = 16
-
-    local function wsUpdate(inputX)
-        local absPos = wsBg.AbsolutePosition.X
-        local absSize = wsBg.AbsoluteSize.X
-        local p = math.clamp((inputX - absPos) / absSize, 0, 1)
-        wsValue = 16 + (200 - 16) * p
-        wsFill.Size = UDim2.fromScale(p, 1)
-        wsKnob.Position = UDim2.new(p, 0, 0.5, 0)
-        wsVal.Text = string.format("%d", wsValue)
-
-        local char = LocalPlayer.Character
-        if char then
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = wsValue
-            end
-        end
-    end
-
-    wsBg.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            wsDragging = true
-            wsUpdate(UserInputService:GetMouseLocation().X)
-        end
-    end)
-    wsKnob.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            wsDragging = true
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(i)
-        if wsDragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-            wsUpdate(UserInputService:GetMouseLocation().X)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            wsDragging = false
+            if aimbotConnection then aimbotConnection:Disconnect() aimbotConnection = nil end
         end
     end)
 
-    -- Drag finestra
+    makeToggle("Steal Speed", false, function(state) end)
+    makeSlider("Steal Speed Multiplier", 1, 10, 3, function(value) end)
+
+    -- SEZIONE: PROTEZIONE
+    makeSection("PROTEZIONE", Green)
+
+    makeToggle("Anti Ragdoll", false, function(state)
+        antiRagdollEnabled = state
+        if state then
+            if antiRagdollConnection then antiRagdollConnection:Disconnect() end
+            antiRagdollConnection = RunService.Heartbeat:Connect(function()
+                if not antiRagdollEnabled then return end
+                local char = LocalPlayer.Character
+                if not char then return end
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local st = humanoid:GetState()
+                    if st == Enum.HumanoidStateType.Physics
+                    or st == Enum.HumanoidStateType.FallingDown
+                    or st == Enum.HumanoidStateType.Ragdoll then
+                        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+                    end
+                end
+            end)
+        else
+            if antiRagdollConnection then antiRagdollConnection:Disconnect() antiRagdollConnection = nil end
+        end
+    end)
+
+    makeToggle("Anti Fling", false, function(state)
+        antiFlingEnabled = state
+        if state then
+            if antiFlingConnection then antiFlingConnection:Disconnect() end
+            antiFlingConnection = RunService.Heartbeat:Connect(function()
+                if not antiFlingEnabled then return end
+                local char = LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                if hrp.AssemblyLinearVelocity.Magnitude > 100 then
+                    hrp.AssemblyLinearVelocity = Vector3.zero
+                end
+            end)
+        else
+            if antiFlingConnection then antiFlingConnection:Disconnect() antiFlingConnection = nil end
+        end
+    end)
+
+    -- SEZIONE: EXTRA
+    makeSection("EXTRA", Cyan)
+
+    makeToggle("Fullbright", false, function(state)
+        if state then
+            Lighting.Brightness = 3
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+        else
+            Lighting.Brightness = 1
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = true
+        end
+    end)
+
+    -- DRAG FINESTRA
     local dragging = false
     local dragStart, startPos
     sabHeader.InputBegan:Connect(function(input)
@@ -1493,11 +1644,8 @@ local function openStealABrainrotHub()
         end
     end)
 
-    -- Entrata animata
     sabFrame.Size = UDim2.fromScale(0.01, 0.01)
-    Tween(sabFrame, 0.6, {Size = UDim2.fromScale(0.45, 0.55)}, Enum.EasingStyle.Back)
-
-    print("[STEAL A BRAINROT HUB] Aperto!")
+    Tween(sabFrame, 0.6, {Size = UDim2.fromScale(0.52, 0.72)}, Enum.EasingStyle.Back)
 end
 
 --========================================================--
@@ -1570,7 +1718,7 @@ local subtitle = Instance.new("TextLabel")
 subtitle.Position = UDim2.fromScale(0.052, 0.61)
 subtitle.Size = UDim2.fromScale(0.6, 0.25)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "Premium Script Hub • V6"
+subtitle.Text = "Premium Script Hub • V8"
 subtitle.TextColor3 = Gray
 subtitle.TextScaled = true
 subtitle.Font = Enum.Font.GothamMedium
@@ -1601,10 +1749,7 @@ closeStroke.Color = Color3.fromRGB(255, 120, 130)
 closeStroke.Thickness = 1
 closeStroke.Parent = close
 
---========================================================--
 -- SIDEBAR
---========================================================--
-
 local sidebar = Instance.new("Frame")
 sidebar.Position = UDim2.fromScale(0.035, 0.245)
 sidebar.Size = UDim2.fromScale(0.2, 0.71)
@@ -1630,10 +1775,7 @@ sidebarLayout.Padding = UDim.new(0, 6)
 sidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 sidebarLayout.Parent = sidebar
 
---========================================================--
 -- CONTENT
---========================================================--
-
 local content = Instance.new("Frame")
 content.Position = UDim2.fromScale(0.25, 0.245)
 content.Size = UDim2.fromScale(0.715, 0.71)
@@ -1654,10 +1796,7 @@ contentPad.PaddingLeft = UDim.new(0, 12)
 contentPad.PaddingRight = UDim.new(0, 12)
 contentPad.Parent = content
 
---========================================================--
 -- PAGINE
---========================================================--
-
 local pages = {}
 
 local function createPage(name)
@@ -1692,10 +1831,7 @@ local function showPage(name)
     end
 end
 
---========================================================--
 -- PULSANTI SIDEBAR
---========================================================--
-
 local sidebarButtons = {}
 local activeBtn
 
@@ -1776,10 +1912,7 @@ activeBtn = bHome
 sidebarButtons[bHome](true)
 showPage("Home")
 
---========================================================--
--- CONTENUTO PAGINA HOME
---========================================================--
-
+-- HOME
 local homeWelcome = Instance.new("TextLabel")
 homeWelcome.Size = UDim2.new(1, 0, 0, 60)
 homeWelcome.BackgroundColor3 = Color3.fromRGB(20, 20, 34)
@@ -1796,10 +1929,7 @@ local homeWC = Instance.new("UICorner")
 homeWC.CornerRadius = UDim.new(0, 10)
 homeWC.Parent = homeWelcome
 
---========================================================--
--- CONTENUTO PAGINA GIOCHI
---========================================================--
-
+-- GIOCHI
 for _, game in ipairs(GAMES) do
     local row = Instance.new("TextButton")
     row.Size = UDim2.new(1, 0, 0, 44)
@@ -1891,10 +2021,7 @@ for _, game in ipairs(GAMES) do
     end)
 end
 
---========================================================--
 -- REOPEN
---========================================================--
-
 local reopen = Instance.new("TextButton")
 reopen.Name = "Reopen"
 reopen.AnchorPoint = Vector2.new(0.5, 0)
@@ -1919,10 +2046,7 @@ local reopenStroke = Instance.new("UIStroke")
 reopenStroke.Thickness = 2
 reopenStroke.Parent = reopen
 
---========================================================--
 -- DRAG & DROP
---========================================================--
-
 local draggingHub = false
 local dragStartHub, startPosHub
 
@@ -1950,10 +2074,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
---========================================================--
--- RGB CONTINUO
---========================================================--
-
+-- RGB
 task.spawn(function()
     while gui.Parent do
         local t = os.clock()
@@ -1964,18 +2085,12 @@ task.spawn(function()
     end
 end)
 
---========================================================--
 -- HUB ENTRATA
---========================================================--
-
 Tween(hub, 0.75, {
     Size = UDim2.fromScale(0.68, 0.68)
 }, Enum.EasingStyle.Back)
 
---========================================================--
 -- CLOSE / OPEN
---========================================================--
-
 local function closeHub()
     local t = Tween(hub, 0.4, {
         Size = UDim2.fromScale(0.01, 0.01)
@@ -2018,10 +2133,7 @@ close.MouseLeave:Connect(function()
     })
 end)
 
---========================================================--
 -- KEYBIND N
---========================================================--
-
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.KeyCode == Enum.KeyCode.N then
@@ -2033,4 +2145,4 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
-print("NEGRO HUB V6 (BLADE BALL + SAB): LOADED SUCCESSFULLY ✅")
+print("NEGRO HUB V8 (FULL UNIFIED): LOADED SUCCESSFULLY ✅")
