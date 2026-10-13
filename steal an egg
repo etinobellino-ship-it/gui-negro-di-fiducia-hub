@@ -1,7 +1,8 @@
 --========================================================--
---         STEAL AN EGG - STANDALONE GUI (V5)              --
+--         STEAL AN EGG - STANDALONE GUI (V6)              --
 --  ESP rare • Auto Collect • Speed AC+ (500) • Air Walk   --
 --  AUTO CARRY TO PLOT (ascend → cruise → wall-avoid → land)
+--  RILEVAMENTO UOVA OTTIMIZZATO (multi-strategia)
 --========================================================--
 
 local CoreGui = game:GetService("CoreGui")
@@ -10,6 +11,8 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -62,11 +65,7 @@ mainFrame.BackgroundTransparency = 0.05
 mainFrame.BorderSizePixel = 0
 mainFrame.ZIndex = 100
 mainFrame.Parent = gui
-
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 18)
-mainCorner.Parent = mainFrame
-
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 18)
 local mainStroke = Instance.new("UIStroke")
 mainStroke.Thickness = 2
 mainStroke.Color = Purple
@@ -84,14 +83,13 @@ header.BackgroundTransparency = 0.1
 header.BorderSizePixel = 0
 header.ZIndex = 110
 header.Parent = mainFrame
-
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 12)
 
 local title = Instance.new("TextLabel")
 title.Position = UDim2.fromScale(0.04, 0)
 title.Size = UDim2.fromScale(0.8, 1)
 title.BackgroundTransparency = 1
-title.Text = "STEAL AN EGG • V5 (AUTO CARRY)"
+title.Text = "STEAL AN EGG • V6 (AUTO CARRY+)"
 title.TextColor3 = Purple
 title.TextScaled = true
 title.Font = Enum.Font.GothamBlack
@@ -188,7 +186,6 @@ local function makeToggle(name, default, callback)
     row.ZIndex = 116
     row.Parent = content
     Instance.new("UICorner", row).CornerRadius = UDim.new(0, 10)
-
     local label = Instance.new("TextLabel")
     label.Position = UDim2.fromScale(0.04, 0)
     label.Size = UDim2.fromScale(0.65, 1)
@@ -200,7 +197,6 @@ local function makeToggle(name, default, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 117
     label.Parent = row
-
     local tg = Instance.new("Frame")
     tg.AnchorPoint = Vector2.new(1, 0.5)
     tg.Position = UDim2.fromScale(0.96, 0.5)
@@ -210,7 +206,6 @@ local function makeToggle(name, default, callback)
     tg.ZIndex = 117
     tg.Parent = row
     Instance.new("UICorner", tg).CornerRadius = UDim.new(1, 0)
-
     local knob = Instance.new("Frame")
     knob.Size = UDim2.fromOffset(18, 18)
     knob.Position = default and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
@@ -219,7 +214,6 @@ local function makeToggle(name, default, callback)
     knob.ZIndex = 118
     knob.Parent = tg
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
     local state = default
     local function toggle()
         state = not state
@@ -257,7 +251,6 @@ local function makeButton(name, color, callback)
     b.ZIndex = 116
     b.Parent = content
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
-
     b.MouseEnter:Connect(function()
         Tween(b, 0.15, {BackgroundColor3 = Color3.fromRGB(
             math.min(color.R * 255 + 40, 255),
@@ -281,7 +274,6 @@ local function makeSlider(name, minV, maxV, defaultV, callback)
     row.ZIndex = 116
     row.Parent = content
     Instance.new("UICorner", row).CornerRadius = UDim.new(0, 10)
-
     local label = Instance.new("TextLabel")
     label.Position = UDim2.fromScale(0.04, 0.08)
     label.Size = UDim2.fromScale(0.7, 0.4)
@@ -293,7 +285,6 @@ local function makeSlider(name, minV, maxV, defaultV, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 117
     label.Parent = row
-
     local valLbl = Instance.new("TextLabel")
     valLbl.AnchorPoint = Vector2.new(1, 0)
     valLbl.Position = UDim2.fromScale(0.96, 0.08)
@@ -306,7 +297,6 @@ local function makeSlider(name, minV, maxV, defaultV, callback)
     valLbl.TextXAlignment = Enum.TextXAlignment.Right
     valLbl.ZIndex = 117
     valLbl.Parent = row
-
     local bg = Instance.new("Frame")
     bg.Position = UDim2.fromScale(0.04, 0.68)
     bg.Size = UDim2.fromScale(0.92, 0.16)
@@ -315,7 +305,6 @@ local function makeSlider(name, minV, maxV, defaultV, callback)
     bg.ZIndex = 117
     bg.Parent = row
     Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
-
     local pct = (defaultV - minV) / (maxV - minV)
     local fill = Instance.new("Frame")
     fill.Size = UDim2.fromScale(pct, 1)
@@ -327,7 +316,6 @@ local function makeSlider(name, minV, maxV, defaultV, callback)
     local fg = Instance.new("UIGradient")
     fg.Color = ColorSequence.new(Purple, Cyan)
     fg.Parent = fill
-
     local knob = Instance.new("Frame")
     knob.AnchorPoint = Vector2.new(0.5, 0.5)
     knob.Position = UDim2.new(pct, 0, 0.5, 0)
@@ -337,7 +325,6 @@ local function makeSlider(name, minV, maxV, defaultV, callback)
     knob.ZIndex = 119
     knob.Parent = bg
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
     local dragging, value = false, defaultV
     local function update(inputX)
         local absPos = bg.AbsolutePosition.X
@@ -384,6 +371,9 @@ local eggAutoCollectConnection = nil
 local eggNotifierConnection = nil
 local eggSpeedConnection = nil
 
+--========================================================--
+-- RARITY SCORING
+--========================================================--
 local function GetEggRarityScore(name)
     local n = name:lower()
     local score = 0
@@ -398,85 +388,194 @@ local function GetEggRarityScore(name)
     return score
 end
 
+--========================================================--
+-- IS REAL EGG (VERSIONE POTENZIATA)
+--========================================================--
+-- Rimuovo la lista di esclusione troppo restrittiva: escludo solo
+-- oggetti che sono CHIARAMENTE non-uova.
 local EXCLUDE_KEYWORDS = {
-    "treadmill","tread mill","machine","guard","pet","plot","base","drop pad",
-    "spawner","cage","portal","teleporter","platform","conveyor","belt","wall",
-    "floor","spawn","sign","button","lever","door","gate","chest","shop","npc",
-    "dummy","target","orb","beam","effect","particle",
+    "treadmill", "machine", "guard", "pet", "plot", "base",
+    "drop pad", "spawner", "cage", "portal", "teleporter",
+    "platform", "conveyor", "belt", "wall", "floor",
+    "sign", "button", "lever", "door", "gate", "chest", "shop",
+    "npc", "dummy", "target", "orb", "beam", "effect", "particle",
 }
+
+-- Parole che indicano che l'oggetto È un uovo (o qualcosa da raccogliere)
+local EGG_KEYWORDS = {
+    "egg", "uovo", "lucky block", "mystery", "brainrot egg",
+    "nest", "hatch", "incubator",
+}
+
+-- Tag comuni usati dai giochi Roblox per gli oggetti raccoglibili
+local EGG_TAGS = {
+    "Egg", "Eggs", "Collectible", "Pickup", "Stealable", "NestEgg",
+}
+
 local function IsRealEgg(obj, name)
-    local n = name:lower()
+    local n = (name or obj.Name):lower()
+
+    -- 1) Esclusione esplicita
     for _, kw in ipairs(EXCLUDE_KEYWORDS) do
         if n:find(kw) then return false end
     end
-    if not (n:find("egg") or n:find("uovo") or n:find("lucky block")
-        or n:find("mystery") or n:find("brainrot egg")) then return false end
-    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-    if not part then return false end
-    if obj:IsA("Model") then
-        if part.Anchored and not n:find("egg") then return false end
+
+    -- 2) Controllo tag (CollectionService)
+    for _, tag in ipairs(EGG_TAGS) do
+        if CollectionService:HasTag(obj, tag) then return true end
     end
-    return true
+
+    -- 3) Controllo ProximityPrompt con ActionText "Egg" o "Pick up"
+    local function hasEggPrompt(o)
+        local p = o:FindFirstChildWhichIsA("ProximityPrompt")
+        if p then
+            local at = (p.ActionText or ""):lower()
+            if at:find("egg") or at:find("pick") or at:find("steal") or at:find("take") then
+                return true
+            end
+        end
+        for _, d in ipairs(o:GetDescendants()) do
+            if d:IsA("ProximityPrompt") then
+                local at = (d.ActionText or ""):lower()
+                if at:find("egg") or at:find("pick") or at:find("steal") or at:find("take") then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+    if hasEggPrompt(obj) then return true end
+
+    -- 4) Controllo nome con parole chiave uovo
+    for _, kw in ipairs(EGG_KEYWORDS) do
+        if n:find(kw) then
+            -- Deve avere una BasePart (non solo un folder vuoto)
+            local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+            if part then return true end
+        end
+    end
+
+    -- 5) Controllo BillboardGui con "Egg" nel nome (uova con ESP già attivo)
+    for _, d in ipairs(obj:GetDescendants()) do
+        if d:IsA("BillboardGui") and (d.Name:lower():find("egg") or d.Name:lower():find("uovo")) then
+            return true
+        end
+    end
+
+    return false
 end
 
+--========================================================--
+-- GET ALL EGGS (MULTI-STRATEGIA)
+--========================================================--
 local function GetAllEggs()
     local eggs, seen = {}, {}
+
     local function addEgg(obj, part, source)
         if not obj or not part or seen[obj] then return end
         seen[obj] = true
-        table.insert(eggs, {object = obj, part = part, source = source or "world",
-            rarityScore = GetEggRarityScore(obj.Name)})
+        table.insert(eggs, {
+            object = obj, part = part, source = source or "world",
+            rarityScore = GetEggRarityScore(obj.Name),
+        })
     end
+
+    -- 1) Scansione completa di Workspace (con controllo ricorsivo)
     for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("Model") or obj:IsA("BasePart") then
+        if obj:IsA("Model") or obj:IsA("BasePart") or obj:IsA("Tool") then
             if IsRealEgg(obj, obj.Name) then
-                local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
                 if part then addEgg(obj, part, "world") end
             end
         end
     end
-    for _, player in ipairs(Players:GetPlayers()) do
-        local char = player.Character
-        if char then
-            for _, obj in ipairs(char:GetDescendants()) do
-                if obj:IsA("Model") or obj:IsA("BasePart") then
-                    local name = obj.Name:lower()
-                    if (name:find("egg") or name:find("uovo") or name:find("carried")
-                        or name:find("held")) and IsRealEgg(obj, obj.Name) then
-                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                        if part then addEgg(obj, part, "carried") end
-                    end
-                end
+
+    -- 2) Scansione di ReplicatedStorage (uova template / in attesa)
+    for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+        if obj:IsA("Model") or obj:IsA("BasePart") then
+            if IsRealEgg(obj, obj.Name) then
+                local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+                if part then addEgg(obj, part, "storage") end
             end
         end
     end
-    local myPlot = Workspace:FindFirstChild(LocalPlayer.Name .. "_Plot")
-        or Workspace:FindFirstChild(LocalPlayer.Name .. "Plot")
-        or Workspace:FindFirstChild("Plot_" .. LocalPlayer.Name)
-    if myPlot then
-        for _, obj in ipairs(myPlot:GetDescendants()) do
-            if obj:IsA("Model") or obj:IsA("BasePart") then
-                if IsRealEgg(obj, obj.Name) then
-                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                    if part then addEgg(obj, part, "pen") end
-                end
-            end
-        end
-    end
-    local folders = {Workspace:FindFirstChild("Eggs"), Workspace:FindFirstChild("DroppedEggs"),
-        Workspace:FindFirstChild("EggFolder"), Workspace:FindFirstChild("EggsFolder")}
-    for _, folder in ipairs(folders) do
+
+    -- 3) Cartelle specifiche del gioco (nomi noti)
+    local knownFolders = {
+        "Eggs", "DroppedEggs", "EggFolder", "EggsFolder",
+        "Nests", "NestEggs", "SpawnedEggs", "WorldEggs",
+    }
+    for _, fname in ipairs(knownFolders) do
+        local folder = Workspace:FindFirstChild(fname)
         if folder then
             for _, obj in ipairs(folder:GetDescendants()) do
                 if obj:IsA("Model") or obj:IsA("BasePart") then
                     if IsRealEgg(obj, obj.Name) then
-                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                        if part then addEgg(obj, part, "dropped") end
+                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+                        if part then addEgg(obj, part, "folder:" .. fname) end
                     end
                 end
             end
         end
     end
+
+    -- 4) Cartelle "PlayerName_Eggs" (pattern visto in altri script)
+    for _, player in ipairs(Players:GetPlayers()) do
+        local folderName = player.Name .. "_Eggs"
+        local folder = Workspace:FindFirstChild(folderName)
+        if folder then
+            for _, obj in ipairs(folder:GetDescendants()) do
+                if obj:IsA("Model") or obj:IsA("BasePart") then
+                    if IsRealEgg(obj, obj.Name) then
+                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+                        if part then addEgg(obj, part, "playerEggs:" .. player.Name) end
+                    end
+                end
+            end
+        end
+    end
+
+    -- 5) Uova trasportate (carried) - character dei giocatori
+    for _, player in ipairs(Players:GetPlayers()) do
+        local char = player.Character
+        if char then
+            for _, obj in ipairs(char:GetDescendants()) do
+                if obj:IsA("Model") or obj:IsA("BasePart") or obj:IsA("Tool") then
+                    local name = obj.Name:lower()
+                    if (name:find("egg") or name:find("uovo") or name:find("carried")
+                        or name:find("held") or name:find("lucky"))
+                        and IsRealEgg(obj, obj.Name) then
+                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+                        if part then addEgg(obj, part, "carried:" .. player.Name) end
+                    end
+                end
+            end
+        end
+    end
+
+    -- 6) Uova nel plot del giocatore locale
+    local myPlotNames = {
+        LocalPlayer.Name .. "_Plot",
+        LocalPlayer.Name .. "Plot",
+        "Plot_" .. LocalPlayer.Name,
+        LocalPlayer.Name .. "_Eggs",
+        LocalPlayer.Name .. "Eggs",
+    }
+    for _, pname in ipairs(myPlotNames) do
+        local plot = Workspace:FindFirstChild(pname)
+        if plot then
+            for _, obj in ipairs(plot:GetDescendants()) do
+                if obj:IsA("Model") or obj:IsA("BasePart") then
+                    if IsRealEgg(obj, obj.Name) then
+                        local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+                        if part then addEgg(obj, part, "pen") end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Filtra per rarità minima
     local filtered = {}
     for _, egg in ipairs(eggs) do
         if egg.rarityScore >= minRarityScore then table.insert(filtered, egg) end
@@ -484,6 +583,9 @@ local function GetAllEggs()
     return filtered
 end
 
+--========================================================--
+-- GET NEAREST EGG
+--========================================================--
 local function GetNearestEgg()
     local char = LocalPlayer.Character
     if not char then return nil end
@@ -499,6 +601,9 @@ local function GetNearestEgg()
     return nearest, nearestDist
 end
 
+--========================================================--
+-- MOVE TO EGG
+--========================================================--
 local function MoveToEgg(egg)
     if not egg or not egg.part then return end
     local char = LocalPlayer.Character
@@ -517,12 +622,22 @@ local function MoveToEgg(egg)
     task.delay(0.2, function() if bv and bv.Parent then bv:Destroy() end end)
 end
 
+--========================================================--
+-- COLLECT EGG
+--========================================================--
 local function CollectEgg(egg)
     if not egg or not egg.part then return end
-    local prompt = egg.part:FindFirstChildWhichIsA("ProximityPrompt")
+    -- Cerca ProximityPrompt ovunque (anche nel Model, non solo nella BasePart)
+    local prompt = nil
+    for _, d in ipairs(egg.part:GetDescendants()) do
+        if d:IsA("ProximityPrompt") then prompt = d; break end
+    end
     if not prompt then
-        for _, desc in ipairs(egg.part:GetDescendants()) do
-            if desc:IsA("ProximityPrompt") then prompt = desc; break end
+        prompt = egg.part:FindFirstChildWhichIsA("ProximityPrompt")
+    end
+    if not prompt and egg.object then
+        for _, d in ipairs(egg.object:GetDescendants()) do
+            if d:IsA("ProximityPrompt") then prompt = d; break end
         end
     end
     if prompt then
@@ -601,7 +716,7 @@ makeToggle("Egg ESP (Solo Uova Rare)", false, function(state)
             task.wait(0.3)
             if obj:IsA("Model") or obj:IsA("BasePart") then
                 if IsRealEgg(obj, obj.Name) then
-                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                    local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
                     if part then createESP({object = obj, part = part, source = "world"}) end
                 end
             end
@@ -828,20 +943,18 @@ makeButton("⛔ Disattiva Air Walk", Color3.fromRGB(160, 60, 60), function() sto
 --========================================================--
 -- SEZIONE: AUTO CARRY TO PLOT
 --========================================================--
-
 local autoCarryEnabled = false
 local autoCarryConnection = nil
-local autoCarrySpeed = 90         -- velocità orizzontale
-local autoCarryClimbSpeed = 55    -- velocità verticale
-local autoCarryExtraHeight = 45   -- altezza extra rispetto al muro rilevato
+local autoCarrySpeed = 90
+local autoCarryClimbSpeed = 55
+local autoCarryExtraHeight = 45
 local autoCarryTargetY = nil
-local autoCarryState = "idle"     -- idle | ascend | cruise | descend | done
+local autoCarryState = "idle"
 local autoCarryLastPos = nil
 local autoCarryStuck = 0
 local autoCarryCachedPlot = nil
 local autoCarryCacheTime = 0
 
--- HUD stato auto carry
 local carryHud = Instance.new("TextLabel")
 carryHud.Name = "AutoCarryHUD"
 carryHud.AnchorPoint = Vector2.new(1, 0)
@@ -859,16 +972,14 @@ carryHud.ZIndex = 999999
 carryHud.Parent = gui
 Instance.new("UICorner", carryHud).CornerRadius = UDim.new(0, 8)
 
-local function updateCarryHUD(txt)
-    if carryHud then carryHud.Text = txt end
-end
+local function updateCarryHUD(txt) if carryHud then carryHud.Text = txt end end
 
--- Rileva l'uovo trasportato (loose check per essere sicuri)
+-- Rileva l'uovo trasportato
 local function getCarriedEgg()
     local char = LocalPlayer.Character
     if not char then return nil end
     for _, obj in ipairs(char:GetDescendants()) do
-        if obj:IsA("Model") or obj:IsA("BasePart") then
+        if obj:IsA("Model") or obj:IsA("BasePart") or obj:IsA("Tool") then
             local n = obj.Name:lower()
             if (n:find("egg") or n:find("uovo") or n:find("carried") or n:find("held")
                 or n:find("lucky")) then
@@ -876,17 +987,14 @@ local function getCarriedEgg()
             end
         end
     end
-    -- Fallback: cerca tag/attributi sul character
     if char:GetAttribute("Carrying") or char:FindFirstChild("Carrying") then
-        -- Ritorno un oggetto fittizio, tanto serve solo per sapere che sta portando qualcosa
         return char
     end
     return nil
 end
 
--- Trova il plot del giocatore (multi-strategia, cachato)
+-- Trova il plot del giocatore
 local function findMyPlot()
-    -- 1) Nomi diretti
     local names = {
         LocalPlayer.Name .. "_Plot",
         LocalPlayer.Name .. "Plot",
@@ -903,7 +1011,6 @@ local function findMyPlot()
             if part then return part.Position, p end
         end
     end
-    -- 2) Cartelle note
     for _, folderName in ipairs({"Plots","PlotFolder","PlayerPlots","Bases","PlotsFolder"}) do
         local folder = Workspace:FindFirstChild(folderName)
         if folder then
@@ -917,7 +1024,6 @@ local function findMyPlot()
             end
         end
     end
-    -- 3) Owner attribute / ObjectValue
     for _, obj in ipairs(Workspace:GetChildren()) do
         local owner = obj:FindFirstChild("Owner") or obj:FindFirstChild("owner")
         if owner then
@@ -955,7 +1061,6 @@ end
 
 local function autoCarryLoop()
     if not autoCarryEnabled then return end
-
     local egg = getCarriedEgg()
     if not egg then
         if autoCarryState ~= "idle" then
@@ -967,13 +1072,11 @@ local function autoCarryLoop()
         updateCarryHUD("AUTO CARRY: in attesa dell'uovo...")
         return
     end
-
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum then return end
 
-    -- Cache plot (ricontrolla ogni 2 secondi)
     if not autoCarryCachedPlot or (os.clock() - autoCarryCacheTime) > 2 then
         local pos, obj = findMyPlot()
         if pos then autoCarryCachedPlot = {pos = pos, obj = obj} end
@@ -985,7 +1088,6 @@ local function autoCarryLoop()
     end
     local plotPos = autoCarryCachedPlot.pos
 
-    -- Init
     if autoCarryState == "idle" then
         autoCarryState = "ascend"
         autoCarryTargetY = hrp.Position.Y + autoCarryExtraHeight + 25
@@ -995,7 +1097,6 @@ local function autoCarryLoop()
         pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end)
     end
 
-    -- BodyVelocity + BodyGyro
     local bv = hrp:FindFirstChild("AutoCarryBV")
     if not bv then
         bv = Instance.new("BodyVelocity")
@@ -1019,7 +1120,6 @@ local function autoCarryLoop()
     local horizDist = horizDelta.Magnitude
     local vel = Vector3.zero
 
-    -- ============ STATE MACHINE ============
     if autoCarryState == "ascend" then
         if curPos.Y >= autoCarryTargetY then
             autoCarryState = "cruise"
@@ -1037,7 +1137,6 @@ local function autoCarryLoop()
         autoCarryLastPos = curPos
 
         if autoCarryStuck > 0.5 then
-            -- Muro rilevato: risali e poi riprendi l'orizzontale
             autoCarryState = "ascend"
             autoCarryTargetY = curPos.Y + autoCarryExtraHeight
             autoCarryStuck = 0
@@ -1149,6 +1248,23 @@ makeButton("📋 Mostra Lista Uova Rare", Color3.fromRGB(80, 130, 200), function
     print("=====================================")
 end)
 
+-- Pulsante di debug: elenca TUTTI gli oggetti che contengono "egg" (anche esclusi)
+makeButton("🔍 DEBUG: elenca tutti gli oggetti con 'egg'", Color3.fromRGB(60, 60, 80), function()
+    print("========== DEBUG: OGGETTI CON 'egg' ==========")
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj.Name:lower():find("egg") then
+            local hasPrompt = false
+            for _, d in ipairs(obj:GetDescendants()) do
+                if d:IsA("ProximityPrompt") then hasPrompt = true; break end
+            end
+            print(string.format("  • %s | Class:%s | Prompt:%s | Anchored:%s",
+                obj:GetFullName(), obj.ClassName, tostring(hasPrompt),
+                tostring(obj:IsA("BasePart") and obj.Anchored or "?")))
+        end
+    end
+    print("==============================================")
+end)
+
 --========================================================--
 -- DRAG
 --========================================================--
@@ -1179,5 +1295,5 @@ end)
 mainFrame.Size = UDim2.fromScale(0.01, 0.01)
 Tween(mainFrame, 0.6, {Size = UDim2.fromScale(0.52, 0.82)}, Enum.EasingStyle.Back)
 
-print("[STEAL AN EGG V5] Caricato. Auto Carry to Plot pronto!")
-print("→ Se il plot non viene trovato, clicca 'Test: mostra la posizione del plot' per vedere il nome esatto.")
+print("[STEAL AN EGG V6] Caricato. Rilevamento uova potenziato!")
+print("→ Usa '🔍 DEBUG: elenca tutti gli oggetti con egg' per vedere cosa c'è nel Workspace.")
