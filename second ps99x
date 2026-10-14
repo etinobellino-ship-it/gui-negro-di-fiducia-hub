@@ -4,6 +4,7 @@
      Features:
        • Salva / rimuovi / pulisci punti di destinazione
        • Auto-Walk ciclico (cammina, NON teletrasporta)
+       • Auto-Jump quando incontra un ostacolo / si blocca
        • Auto-Press E sui ProximityPrompt (spam)
        • Hotkey RightShift per nascondere la GUI
     ═══════════════════════════════════════════════════
@@ -22,7 +23,8 @@ local autoWalk     = false
 local autoE        = false
 local cycleIndex   = 1
 local delayTime    = 1.5        -- pausa extra dopo l'arrivo ad ogni waypoint
-local walkTimeout  = 30         -- secondi massimi per raggiungere un punto
+local walkTimeout  = 60         -- secondi massimi per raggiungere un punto
+local stuckTime    = 0.8        -- quanto deve stare fermo prima di saltare
 local currentPrompt = nil
 
 -- ===================== HELPERS ===================
@@ -40,7 +42,24 @@ local function getHRP()
     return c and c:FindFirstChild("HumanoidRootPart")
 end
 
--- Cammina verso vec3 (NON teletrasporta). Ritorna true se arrivato.
+-- Fa saltare il personaggio una volta
+local function doJump()
+    local hum = getHum()
+    if not hum then return end
+    pcall(function()
+        hum.Jump = true
+    end)
+    -- fallback: simula spazio
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true,  Enum.KeyCode.Space, false, game)
+        task.wait(0.05)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+    end)
+end
+
+-- Cammina verso vec3 (NON teletrasporta).
+-- Salta automaticamente se rileva di essere bloccato.
+-- Ritorna true se arrivato.
 local function walkTo(vec3)
     local char = getChar()
     if not char then return false end
@@ -50,7 +69,10 @@ local function walkTo(vec3)
 
     hum:MoveTo(vec3)
 
-    local startT = tick()
+    local startT        = tick()
+    local lastPos       = hrp.Position
+    local lastMovedT    = tick()
+
     while tick() - startT < walkTimeout do
         char = getChar()
         hum  = getHum()
@@ -63,7 +85,24 @@ local function walkTo(vec3)
             hum:MoveTo(hrp.Position) -- ferma il movimento
             return true
         end
-        task.wait(0.1)
+
+        -- controlla se ci stiamo muovendo
+        local moved = (hrp.Position - lastPos).Magnitude
+        if moved > 0.5 then
+            lastMovedT = tick()
+            lastPos    = hrp.Position
+        else
+            -- se siamo fermi da troppo tempo → salta
+            if tick() - lastMovedT > stuckTime then
+                doJump()
+                lastMovedT = tick()   -- reset per evitare spam di salti continui
+                lastPos    = hrp.Position
+            end
+        end
+
+        -- rinnova MoveTo periodicamente (a volte serve dopo un salto)
+        hum:MoveTo(vec3)
+        task.wait(0.08)
     end
 
     -- timeout: ferma comunque
@@ -119,7 +158,7 @@ local titleLbl = Instance.new("TextLabel")
 titleLbl.Size              = UDim2.new(1, -50, 1, 0)
 titleLbl.Position          = UDim2.new(0, 15, 0, 0)
 titleLbl.BackgroundTransparency = 1
-titleLbl.Text              = "Case Farm Hub (Walk)"
+titleLbl.Text              = "Case Farm Hub (Walk+Jump)"
 titleLbl.TextColor3        = Color3.fromRGB(240, 240, 250)
 titleLbl.Font              = Enum.Font.GothamBold
 titleLbl.TextSize          = 16
@@ -364,7 +403,7 @@ end)
 
 -- ===================== LOGICA ====================
 
--- Loop Auto-Walk (cammina verso ogni posizione salvata)
+-- Loop Auto-Walk (cammina verso ogni posizione salvata, salta se bloccato)
 task.spawn(function()
     while true do
         if autoWalk and #positions >= 1 then
@@ -424,4 +463,4 @@ end)
 
 -- Init
 refreshList()
-print("[Case Farm Hub Walk] Caricato. RightShift per mostrare/nascondere la GUI.")
+print("[Case Farm Hub Walk+Jump] Caricato. RightShift per mostrare/nascondere la GUI.")
